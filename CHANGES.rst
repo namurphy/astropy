@@ -143,8 +143,9 @@ astropy.config
   it and relying on reloading it from the previous config file. This ensures
   that any programmatically made changes are preserved as well. [#10474]
 
-- Configuration path detection for Windows will now only look for ``HOMESHARE``
-  if all other options are exhausted. [#10705]
+- Configuration path detection logic has changed: Now, it looks for ``~`` first
+  before falling back to older logic. In addition, ``HOMESHARE`` is no longer
+  used in Windows. [#10705]
 
 astropy.constants
 ^^^^^^^^^^^^^^^^^
