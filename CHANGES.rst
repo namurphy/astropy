@@ -47,8 +47,6 @@ astropy.io.ascii
 astropy.io.fits
 ^^^^^^^^^^^^^^^
 
-- Fix handling of 1-dimensional arrays with single elements in BinaryTableHDUs [#10768]
-
 astropy.io.misc
 ^^^^^^^^^^^^^^^
 
@@ -1038,6 +1036,8 @@ astropy.io.fits
   [#10640]
 
 - Fix compilation of cfitsio with Xcode 12. [#10772]
+
+- Fix handling of 1-dimensional arrays with a single element in ``BinTableHDU`` [#10768]
 
 astropy.io.misc
 ^^^^^^^^^^^^^^^
