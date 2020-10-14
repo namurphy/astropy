@@ -972,6 +972,10 @@ astropy.utils
 astropy.visualization
 ^^^^^^^^^^^^^^^^^^^^^
 
+- Fixed the caclulation of the tight bounding box of a ``WCSAxes``. This should
+  also significantly improve the application of ``tight_layout()`` to figures
+  containing ``WCSAxes``. [#10797]
+
 astropy.wcs
 ^^^^^^^^^^^
 
@@ -1250,10 +1254,6 @@ astropy.visualization
 
 - Fixed a bug where ``axes.xlabel``/``axes.ylabel`` where not correctly set
   nor returned on an ``EllipticalFrame`` class ``WCSAxes`` plot. [#10446]
-
-- Fixed the caclulation of the tight bounding box of a ``WCSAxes``. This should
-  also significantly improve the application of ``tight_layout()`` to figures
-  containing ``WCSAxes``. [#10797]
 
 astropy.wcs
 ^^^^^^^^^^^
