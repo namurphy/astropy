@@ -240,6 +240,7 @@ astropy.coordinates
 
 astropy.cosmology
 ^^^^^^^^^^^^^^^^^
+- Clarified definition of inputs to `angular_diameter_distance_z1z2` Added warning if z2<z1. [#11197]
 
 astropy.extern
 ^^^^^^^^^^^^^^
@@ -360,6 +361,7 @@ astropy.cosmology
 
 - Fixed an issue where specializations of the comoving distance calculation
   for certain cosmologies could not handle redshift arrays. [#10980]
+
 
 astropy.extern
 ^^^^^^^^^^^^^^
