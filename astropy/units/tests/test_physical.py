@@ -25,7 +25,7 @@ def test_speed():
 
 
 def test_unknown():
-    assert (u.m * u.s).physical_type == 'unknown'
+    assert (u.m * u.s ** 8).physical_type == 'unknown'
 
 
 def test_dimensionless():
@@ -63,27 +63,32 @@ def test_data_quantity():
 
 @pytest.fixture
 def length():
-    return physical._PhysicalType(u.m)
+    return physical.PhysicalType(u.m, {"length"})
 
 
 @pytest.fixture
 def time():
-    return physical._PhysicalType(u.s)
+    return physical.PhysicalType(u.s, {"time"})
 
 
 @pytest.fixture
 def velocity():
-    return physical._PhysicalType(u.m / u.s)
+    return physical.PhysicalType(u.m / u.s, {"velocity"})
 
 
 @pytest.fixture
 def area():
-    return physical._PhysicalType(u.m ** 2)
+    return physical.PhysicalType(u.m ** 2, {"area"})
+
+
+@pytest.fixture
+def dimensionless():
+    return physical.PhysicalType(u.dimensionless_unscaled, {"dimensionless"})
 
 
 def test_physical_type_equality():
-    length1 = physical._PhysicalType(u.m)
-    length2 = physical._PhysicalType(u.m)
+    length1 = physical.PhysicalType(u.m, {"length"})
+    length2 = physical.PhysicalType(u.m, "length")
     assert (length1 == length2) is True
     assert (length1 != length2) is False
 
@@ -91,7 +96,6 @@ def test_physical_type_equality():
 def test_physical_type_inequality(length, time):
     assert (length != time) is True
     assert (length == time) is False
-
 
 
 def test_physical_type_as_set(length):
@@ -112,3 +116,24 @@ def test_physical_type_division(length, time, velocity):
 
 def test_physical_type_power(length, area):
     assert length ** 2 == area
+
+
+def test_dimensionless(dimensionless):
+    assert dimensionless == "dimensionless"
+
+
+def test_repr(length):
+    assert repr(length) == "length"
+
+
+def test_in_unit():
+    assert isinstance(u.m.physical_type, physical.PhysicalType)
+
+
+def test_known_unit_physical_type_is_PhysicalType():
+    assert isinstance(u.m.physical_type, physical.PhysicalType)
+
+
+def test_unknown_unit_physical_type_is_PhysicalType():
+    unknown_unit = u.s ** 19
+    assert isinstance(unknown_unit.physical_type, physical.PhysicalType)
