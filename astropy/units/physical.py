@@ -9,6 +9,9 @@ the physical unit name of a `Unit` can be obtained using its `ptype`
 property.
 """
 
+import collections
+import numbers
+import typing
 
 from . import core
 from . import si
@@ -21,8 +24,79 @@ from . import misc
 __all__ = ['def_physical_type', 'get_physical_type']
 
 
-_physical_unit_mapping = {}
+_physical_unit_mapping = collections.defaultdict(lambda: {"unknown"})
 _unit_physical_mapping = {}
+
+
+class _PhysicalType:
+    """
+    Represents and provides information on the physical type(s) that are
+    associated with a set of units.
+    """
+
+    def __init__(self, unit):
+        self._unit = unit
+        self._physical_type_id = unit._get_physical_type_id()
+        self._as_set = _physical_unit_mapping[self._physical_type_id]
+
+    @property
+    def as_set(self) -> typing.Set[str]:
+        """Return a `set` of all physical types that represent a `Unit`."""
+        return self._as_set
+
+    def _get_physical_type_id(self):
+        return self._physical_type_id
+
+    def __eq__(self, other):
+        """Return `True` if `other` represents a physical type"""
+        if isinstance(other, str):
+            return other in self.as_set
+        elif isinstance(other, _PhysicalType):
+            return self._physical_type_id == other._physical_type_id
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __contains__(self, item):
+        return item in self.as_set
+
+    def __repr__(self):
+        return repr(self.as_set)
+
+    def __str__(self):
+        return str(self.as_set)
+
+    @staticmethod
+    def _identify_unit_from_unit_or_physical_type(obj):
+        if isinstance(obj, core.UnitBase):
+            return obj
+        elif isinstance(obj, _PhysicalType):
+            return obj._unit
+        else:
+            raise TypeError("Expecting a unit or a physical type")
+
+    def __mul__(self, other):
+        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        new_unit = self._unit * other_unit
+        return new_unit.physical_type
+
+    def __truediv__(self, other):
+        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        new_unit = self._unit / other_unit
+        print(other_unit)
+        print(self._unit)
+        print(new_unit)
+        return new_unit.physical_type
+
+    def __pow__(self, power):
+        if not isinstance(power, numbers.Real):
+            raise TypeError(f"{power} is not a real number")
+        return (self._unit ** power).physical_type
+
+    def __invert__(self):
+        return (self._unit ** -1).physical_type
 
 
 def def_physical_type(unit, name):
@@ -131,3 +205,4 @@ for unit, name in [
     (cgs.abcoulomb, 'electrical charge (EMU)')
 ]:
     def_physical_type(unit, name)
+
