@@ -24,6 +24,19 @@ from . import misc
 __all__ = ['def_physical_type', 'get_physical_type']
 
 
+_unit_physical_type_pairs = [
+    (si.m, {"length"}),
+    (si.s, {"time"}),
+    (si.kg, {"mass"}),
+    (si.A, {"electrical current"}),
+    (si.K, {"temperature"}),
+    (si.mol, {"amount of substance"}),
+    (si.cd, {"luminous intensity"}),
+    (si.rad, {"angle"}),
+]
+
+
+
 _physical_unit_mapping = collections.defaultdict(lambda: {"unknown"})
 _unit_physical_mapping = {}
 
