@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -9,9 +8,8 @@ the physical unit name of a `Unit` can be obtained using its `ptype`
 property.
 """
 
-import collections
 import numbers
-import typing
+from typing import Set, Union
 
 from . import core
 from . import si
@@ -36,9 +34,17 @@ _unit_physical_type_pairs = [
 ]
 
 
-
-_physical_unit_mapping = collections.defaultdict(lambda: {"unknown"})
+_physical_unit_mapping = {}
 _unit_physical_mapping = {}
+
+
+def _identify_unit_from_unit_or_physical_type(obj):
+    if isinstance(obj, core.UnitBase):
+        return obj
+    elif isinstance(obj, _PhysicalType):
+        return obj._unit
+    else:
+        raise TypeError("Expecting a unit or a physical type")
 
 
 class _PhysicalType:
@@ -47,13 +53,16 @@ class _PhysicalType:
     associated with a set of units.
     """
 
-    def __init__(self, unit):
+    def __init__(self, unit, physical_types: Union[str, Set[str]]):
         self._unit = unit
         self._physical_type_id = unit._get_physical_type_id()
-        self._as_set = _physical_unit_mapping[self._physical_type_id]
+        if isinstance(physical_types, str):
+            self._as_set = {physical_types}
+        elif isinstance(physical_types, set):
+            self._as_set = physical_types
 
     @property
-    def as_set(self) -> typing.Set[str]:
+    def as_set(self) -> Set[str]:
         """Return a `set` of all physical types that represent a `Unit`."""
         return self._as_set
 
@@ -62,10 +71,11 @@ class _PhysicalType:
 
     def __eq__(self, other):
         """Return `True` if `other` represents a physical type"""
+
         if isinstance(other, str):
             return other in self.as_set
         elif isinstance(other, _PhysicalType):
-            return self._physical_type_id == other._physical_type_id
+            return self._get_physical_type_id() == other._get_physical_type_id()
         else:
             return False
 
@@ -76,31 +86,22 @@ class _PhysicalType:
         return item in self.as_set
 
     def __repr__(self):
-        return repr(self.as_set)
+        if len(self.as_set) == 1:
+            return [p for p in self.as_set][0]
+        else:
+            return str(self.as_set)
 
     def __str__(self):
-        return str(self.as_set)
-
-    @staticmethod
-    def _identify_unit_from_unit_or_physical_type(obj):
-        if isinstance(obj, core.UnitBase):
-            return obj
-        elif isinstance(obj, _PhysicalType):
-            return obj._unit
-        else:
-            raise TypeError("Expecting a unit or a physical type")
+        return self.__repr__()
 
     def __mul__(self, other):
-        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        other_unit = _identify_unit_from_unit_or_physical_type(other)
         new_unit = self._unit * other_unit
         return new_unit.physical_type
 
     def __truediv__(self, other):
-        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        other_unit = _identify_unit_from_unit_or_physical_type(other)
         new_unit = self._unit / other_unit
-        print(other_unit)
-        print(self._unit)
-        print(new_unit)
         return new_unit.physical_type
 
     def __pow__(self, power):
@@ -121,18 +122,28 @@ def def_physical_type(unit, name):
     unit : `~astropy.units.UnitBase` instance
         The unit to map from.
 
-    name : str
-        The physical name of the unit.
+    name : str, set
+        The physical name of the unit, or the
     """
-    r = unit._get_physical_type_id()
-    if r in _physical_unit_mapping:
+
+    if name in ("unknown", {"unknown"}):
+        raise ValueError("Unable to uniquely define an unknown physical type")
+
+    physical_type_id = unit._get_physical_type_id()
+    if physical_type_id in _physical_unit_mapping:
         raise ValueError(
-            f"{r!r} ({name!r}) already defined as {_physical_unit_mapping[r]!r}")
-    _physical_unit_mapping[r] = name
-    _unit_physical_mapping[name] = r
+            f"{physical_type_id!r} ({name!r}) already defined as {_physical_unit_mapping[physical_type_id]!r}")
+
+    if isinstance(name, str):
+        name = {name}
+
+    _physical_unit_mapping[physical_type_id] = _PhysicalType(unit, name)
+
+    for physical_type in name:
+        _unit_physical_mapping[physical_type] = physical_type_id
 
 
-def get_physical_type(unit):
+def get_physical_type(unit: core.UnitBase):
     """
     Given a unit, returns the name of the physical quantity it
     represents.  If it represents an unknown physical quantity,
@@ -141,16 +152,25 @@ def get_physical_type(unit):
     Parameters
     ----------
     unit : `~astropy.units.UnitBase` instance
-        The unit to lookup
+        The unit to look up
 
     Returns
     -------
-    physical : str
+    physical : _PhysicalType
         The name of the physical quantity, or unknown if not
-        known.
+        known. sadfjklsadfhljasdfhjkasdfjklhsadhfasdfksdfasdf
     """
-    r = unit._get_physical_type_id()
-    return _physical_unit_mapping.get(r, 'unknown')
+    if not isinstance(unit, core.UnitBase):
+        return TypeError
+
+    physical_type_id = unit._get_physical_type_id()
+
+    known_unit = physical_type_id in _physical_unit_mapping
+
+    if known_unit:
+        return _physical_unit_mapping[physical_type_id]
+    else:
+        return _PhysicalType(unit, "unknown")
 
 
 for unit, name in [
@@ -218,4 +238,3 @@ for unit, name in [
     (cgs.abcoulomb, 'electrical charge (EMU)')
 ]:
     def_physical_type(unit, name)
-
