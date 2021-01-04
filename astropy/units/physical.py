@@ -8,6 +8,7 @@ the physical unit name of a `Unit` can be obtained using its
 `physical_type` property.
 """
 
+import numbers
 from typing import Union, Set
 
 from . import core
@@ -70,6 +71,31 @@ class PhysicalType:
 
     def __str__(self):
         return self.__repr__()
+
+    @staticmethod
+    def _identify_unit_from_unit_or_physical_type(obj):
+        if isinstance(obj, core.UnitBase):
+            return obj
+        elif isinstance(obj, _PhysicalType):
+            return obj._unit
+        else:
+            raise TypeError("Expecting a unit or a physical type")
+
+    def __mul__(self, other):
+        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        new_unit = self._unit * other_unit
+        return new_unit.physical_type
+
+    def __truediv__(self, other):
+        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        new_unit = self._unit / other_unit
+        return new_unit.physical_type
+
+    def __pow__(self, power):
+        if not isinstance(power, numbers.Real):
+            raise TypeError(f"{power} is not a real number")
+        return (self._unit ** power).physical_type
+
 
 def def_physical_type(unit, name):
     """
