@@ -94,6 +94,13 @@ astropy.uncertainty
 astropy.units
 ^^^^^^^^^^^^^
 
+- Create the ``astropy.units.physical.PhysicalType`` class to represent the
+  physical types of units and all there to be more than one physical type
+  associated with a unit.  The ``physical_type`` attribute of each unit is
+  now an instance of the ``PhysicalType`` class instead of a string.  The
+  operations multiplication, division, and exponentiation are able to be
+  performed on ``PhysicalType`` instances. [#11204]
+
 astropy.utils
 ^^^^^^^^^^^^^
 
@@ -179,6 +186,10 @@ astropy.uncertainty
 
 astropy.units
 ^^^^^^^^^^^^^
+
+- The ``physical_type`` attribute of units now returns an instance of
+  ``astropy.units.physical.PhysicalType`` instead of a string.  This
+  class was written to largely maintain the existing API.  [#11204]
 
 astropy.utils
 ^^^^^^^^^^^^^
@@ -271,6 +282,10 @@ astropy.units
 ^^^^^^^^^^^^^
 
 - Move non-astronomy units from astrophys.py to a new misc.py file. [#11142]
+
+- The physical type of ``astropy.units.mol / astropy.units.m ** 3`` is now
+  defined as ``"molar concentration"``.  It was previously incorrectly
+  defined as ``"molar volume"``.  [#11204]
 
 astropy.utils
 ^^^^^^^^^^^^^
@@ -369,6 +384,9 @@ astropy.uncertainty
 
 astropy.units
 ^^^^^^^^^^^^^
+
+- Redefined the physical type of moles per volume to ``"molar concentration"``.
+  This physical type had incorrectly been defined as ``"molar volume"``.
 
 astropy.utils
 ^^^^^^^^^^^^^
