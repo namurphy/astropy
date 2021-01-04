@@ -47,6 +47,21 @@ class PhysicalType:
     def _get_physical_type_id(self):
         return self._physical_type_id
 
+    def __eq__(self, other):
+        """Return `True` if `other` represents a physical type"""
+        if isinstance(other, str):
+            return other in self.as_set
+        elif isinstance(other, PhysicalType):
+            return self._get_physical_type_id() == other._get_physical_type_id()
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __contains__(self, item):
+        return item in self.as_set
+
 
 def def_physical_type(unit, name):
     """
