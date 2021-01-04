@@ -62,6 +62,14 @@ class PhysicalType:
     def __contains__(self, item):
         return item in self.as_set
 
+    def __repr__(self):
+        if len(self.as_set) == 1:
+            return [p for p in self.as_set][0]
+        else:
+            return str(self.as_set)
+
+    def __str__(self):
+        return self.__repr__()
 
 def def_physical_type(unit, name):
     """
