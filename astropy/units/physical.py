@@ -128,7 +128,13 @@ class PhysicalType:
         elif isinstance(other, set):
             return other.issubset(self.as_set)
         elif isinstance(other, PhysicalType):
-            return self._get_physical_type_id() == other._get_physical_type_id()
+            if self._get_physical_type_id() == other._get_physical_type_id():
+                return True
+            elif self == "temperature" and other == "temperature":
+                # Because K, °C, & °F have different physical type IDs
+                return True
+            else:
+                return False
         else:
             return False
 

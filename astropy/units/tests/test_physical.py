@@ -325,3 +325,21 @@ def test_get_physical_type_error(not_unit):
     """
     with pytest.raises(TypeError):
         physical.get_physical_type(not_unit)
+
+
+@pytest.mark.parametrize(
+    "temperature_unit1, temperature_unit2",
+    [
+        (u.K, u.deg_C),
+        (u.K, u.imperial.deg_F),
+        (u.deg_C, u.imperial.deg_F),
+    ],
+)
+def test_temperature_kelvin_celsius(temperature_unit1, temperature_unit2):
+    """
+    Because K, °C, & °F have different physical type IDs, test that
+    different measurements of temperature are treated as equivalent.
+    """
+    assert temperature_unit1.physical_type == "temperature"
+    assert temperature_unit2.physical_type == "temperature"
+    assert temperature_unit1.physical_type == temperature_unit2.physical_type
