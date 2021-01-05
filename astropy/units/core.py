@@ -1340,10 +1340,11 @@ class UnitBase:
         >>> from astropy import units as u
         >>> u.m.physical_type
         'length'
-        >>> u.Pa.physical_type
-        {'energy density', 'pressure'}
         >>> u.m.physical_type ** 3
         'volume'
+        >>> u.Pa.physical_type
+        {'energy density', 'pressure', 'stress'}
+
         """
         from . import physical
         return physical.get_physical_type(self)
