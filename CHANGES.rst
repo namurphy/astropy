@@ -293,6 +293,7 @@ astropy.units
 - The physical type of ``astropy.units.mol / astropy.units.m ** 3`` is now
   defined as molar concentration.  It was previously incorrectly defined
   as molar volume.  [#11204]
+- Make ``Unit`` string parsing (as well as ``Angle`` parsing) thread-safe.
 
 astropy.utils
 ^^^^^^^^^^^^^
