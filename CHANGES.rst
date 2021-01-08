@@ -109,7 +109,7 @@ astropy.utils
   file/directory exists, as long as the package and module do. [#11006]
 
 - Make ``lazyproperty`` and ``classdecorator`` thread-safe. This should fix a
-  number of thread safety issues. [#11221]
+  number of thread safety issues. [#11224]
 
 astropy.visualization
 ^^^^^^^^^^^^^^^^^^^^^
