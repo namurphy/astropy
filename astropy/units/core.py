@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -1345,6 +1344,22 @@ class UnitBase:
         >>> u.Pa.physical_type
         {'energy density', 'pressure', 'stress'}
 
+        Physical types can be compared to other physical types
+        (recommended in packages) or to strings.
+
+        >>> area = (u.m ** 2).physical_type
+        >>> area == u.m.physical_type ** 2
+        True
+        >>> area == "area"
+        True
+
+        `~astropy.units.physical.PhysicalType` objects can be used for
+        dimensional analysis.
+
+        >>> number_density = (u.m ** -3).physical_type
+        >>> velocity = (u.m / u.s).physical_type
+        >>> number_density * velocity
+        'particle flux'
         """
         from . import physical
         return physical.get_physical_type(self)
