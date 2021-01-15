@@ -135,8 +135,7 @@ def test_physical_types(unit, physical_type):
 
 
 @pytest.mark.parametrize(
-    "unit, expected_set",
-    [
+    "unit, expected_set", [
         (u.m, {"length"}),
         (u.Pa, {"energy density", "pressure", "stress"}),
     ],
@@ -195,6 +194,12 @@ nonequivalent_unit_pairs = [
 ]
 
 
+def test_dimensionless_physical_type_equality():
+    """Test a dimensionless instance of `physical.PhysicalType`."""
+    dimensionless = u.dimensionless_unscaled.physical_type
+    assert dimensionless == "dimensionless"
+
+
 @pytest.mark.parametrize("unit1, unit2", nonequivalent_unit_pairs)
 def test_physical_type_instance_inequality(unit1, unit2):
     """
@@ -228,6 +233,7 @@ def test_physical_type_multiplication():
     speed = (u.m / u.s).physical_type
     assert speed * time == length
     assert speed * u.s == length
+    assert u.s * speed == length
 
 
 def test_physical_type_division():
@@ -246,22 +252,6 @@ def test_physical_type_power():
     area = u.barn.physical_type
     assert length ** 2 == area
     assert area ** (1 / 2) == length
-
-
-def test_physical_type_power_typeerror():
-    """
-    Test that exponentiation with an invalid power raises the
-    appropriate exception.
-    """
-    length = u.m.physical_type
-    with pytest.raises(TypeError):
-        length ** length
-
-
-def test_dimensionless_physical_type_equality():
-    """Test a dimensionless instance of `physical.PhysicalType`."""
-    dimensionless = u.dimensionless_unscaled.physical_type
-    assert dimensionless == "dimensionless"
 
 
 def test_dimensionless_operations():
@@ -305,33 +295,12 @@ def test_str_and_repr_for_multiple_physical_types():
     assert repr(pressure) == expected
 
 
-def test_physical_type_attribute_of_unit():
+def test_unknown_physical_type():
     """
-    Test that a `u.Unit` instance has an attribute named `physical_type`
-    which is an instance of `physical.PhysicalType`.
-    """
-    assert isinstance(u.m.physical_type, physical.PhysicalType)
-
-
-def test_unknown_unit_physical_type_is_PhysicalType():
-    """
-    Test that a set of units with an unknown physical type has an
-    attribute named `physical_type` that is a `physical.PhysicalType`
-    instance.
+    Test that an unknown physical type is correctly named as "unknown".
     """
     unknown_unit = u.s ** 19
-    assert isinstance(unknown_unit.physical_type, physical.PhysicalType)
-
-
-@pytest.mark.parametrize("not_unit", [u.m.physical_type, 1, "1"])
-def test_get_physical_type_error(not_unit):
-    """
-    Test that attempting to get a physical type with
-    `physical.get_physical_type` for something that is not a unit raises
-    the appropriate exception.
-    """
-    with pytest.raises(TypeError):
-        physical.get_physical_type(not_unit)
+    assert unknown_unit.physical_type == "unknown"
 
 
 @pytest.mark.parametrize(
@@ -388,38 +357,6 @@ def test_physical_type_iteration():
     assert physical_type_names == ["energy density", "pressure", "stress"]
 
 
-def test_expanding_names_for_physical_type():
-    """
-    Test that trying to redefine a physical type with
-    `physical.def_physical_type` raises the appropriate exception.
-    """
-    weird_unit = u.s ** 42
-    physical.def_physical_type(weird_unit, "original physical type")
-    physical.def_physical_type(weird_unit, "new physical type")
-
-    assert set((u.s ** 42).physical_type) == {
-        "original physical type",
-        "new physical type",
-    }
-
-
-def test_multiple_same_physical_type_names():
-    """Test that def_physical_type does not define a """
-    strange_unit = u.m ** 18 * u.s ** -49
-    with pytest.raises(ValueError):
-        physical.def_physical_type(strange_unit, {"time", "something"})
-    assert strange_unit.physical_type == "unknown"
-
-
-def test_redundant_physical_type():
-    """
-    Test that a physical type name already in use cannot be assigned for
-    another unit (excluding `"unknown"`).
-    """
-    with pytest.raises(ValueError):
-        physical.def_physical_type(u.m ** 23, "length")
-
-
 def test_get_physical_type_for_temperatures():
     """
     Test that `get_physical_type` retrieves the same physical type for
@@ -448,3 +385,63 @@ def test_unrecognized_unit_physical_type():
     physical_type = unrecognized_unit.physical_type
     assert isinstance(physical_type, physical.PhysicalType)
     assert physical_type == "unknown"
+
+
+def _undef_physical_type(unit):
+    """Reset the physical type of unit to "unknown"."""
+    for name in list(unit.physical_type):
+        del physical._unit_physical_mapping[name]
+    del physical._physical_unit_mapping[unit._get_physical_type_id()]
+    assert unit.physical_type == "unknown"
+
+
+def test_expanding_names_for_physical_type():
+    """
+    Test that calling `def_physical_type` on an existing physical
+    type adds a new physical type name.
+    """
+    weird_unit = u.s ** 42
+    weird_name = "I kind of want to"
+    strange_name = "use a cat emoji here"
+
+    physical.def_physical_type(weird_unit, weird_name)
+    assert (
+        weird_unit.physical_type == weird_name
+    ), f"unable to set physical type for {weird_unit}"
+
+    physical.def_physical_type(weird_unit, strange_name)
+    assert set((u.s ** 42).physical_type) == {
+        weird_name,
+        strange_name,
+    }, f"did not correctly append a new physical type name."
+
+    _undef_physical_type(weird_unit)
+
+
+def test_attempt_to_define_unknown_physical_type():
+    """Test that a unit cannot be defined as unknown."""
+    with pytest.raises(ValueError):
+        physical.def_physical_type(u.m ** 99, "unknown")
+    assert "unknown" not in physical._unit_physical_mapping
+
+
+def test_multiple_same_physical_type_names():
+    """
+    Test that def_physical_type raises an exception when it tries to
+    set the physical type of a new unit as the name of an existing
+    physical type.
+    """
+    strange_unit = u.m ** 18 * u.s ** -49
+    with pytest.raises(ValueError):
+        physical.def_physical_type(strange_unit, {"time", "something"})
+    assert strange_unit.physical_type == "unknown"
+
+
+def test_redundant_physical_type():
+    """
+    Test that a physical type name already in use cannot be assigned
+    for another unit (excluding `"unknown"`).
+    """
+    not_length = u.m ** 23
+    with pytest.raises(ValueError):
+        physical.def_physical_type(not_length, "length")
