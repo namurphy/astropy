@@ -1339,8 +1339,7 @@ class UnitBase:
         >>> from astropy import units as u
         >>> u.m.physical_type
         'length'
-        >>> u.m.physical_type ** 3
-        'volume'
+
         >>> u.Pa.physical_type
         {'energy density', 'pressure', 'stress'}
 
@@ -1356,7 +1355,7 @@ class UnitBase:
         `~astropy.units.physical.PhysicalType` objects can be used for
         dimensional analysis.
 
-        >>> number_density = (u.m ** -3).physical_type
+        >>> number_density = u.m.physical_type ** -3
         >>> velocity = (u.m / u.s).physical_type
         >>> number_density * velocity
         'particle flux'
