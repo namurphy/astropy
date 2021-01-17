@@ -204,7 +204,8 @@ astropy.units
 - The ``physical_type`` attribute of units now returns an instance of
   ``astropy.units.physical.PhysicalType`` instead of a string.  Because
   ``PhysicalType`` instances can be compared to strings, no code changes
-  should be necessary.  [#11204]
+  should be necessary when making comparisons.  The string representations
+  of different physical types will differ from previous releases.  [#11204]
 
 astropy.utils
 ^^^^^^^^^^^^^

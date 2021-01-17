@@ -8,6 +8,8 @@ the physical unit name(s) of a `Unit` can be obtained using its
 ``physical_type`` property.
 """
 
+import numbers
+
 from . import core
 from . import si
 from . import astrophys
@@ -31,18 +33,18 @@ _units_and_physical_types = [
     (si.mol, "amount of substance"),
     (si.K, "temperature"),
     (si.W * si.m ** -1 * si.K ** -1, "thermal conductivity"),
-    (si.J * si.K ** -1, ["heat capacity", "entropy"]),
+    (si.J * si.K ** -1, {"heat capacity", "entropy"}),
     (si.J * si.K ** -1 * si.kg ** -1, {"specific heat capacity", "specific entropy"}),
     (si.N, "force"),
-    (si.J, ["energy", "work", "torque"]),
-    (si.J * si.m ** -2 * si.s ** -1,{"energy flux", "irradiance"}),
+    (si.J, {"energy", "work", "torque"}),
+    (si.J * si.m ** -2 * si.s ** -1, {"energy flux", "irradiance"}),
     (si.Pa, {"pressure", "energy density", "stress"}),
     (si.W, {"power", "radiant flux"}),
     (si.kg * si.m ** -3, "mass density"),
     (si.m ** 3 / si.kg, "specific volume"),
     (si.mol / si.m ** 3, "molar concentration"),
     (si.m ** 3 / si.mol, "molar volume"),
-    (si.kg * si.m / si.s, ["momentum", "impulse"]),
+    (si.kg * si.m / si.s, {"momentum", "impulse"}),
     (si.kg * si.m ** 2 / si.s, {"angular momentum", "action"}),
     (si.rad / si.s, "angular speed"),
     (si.rad / si.s ** 2, "angular acceleration"),
@@ -54,7 +56,7 @@ _units_and_physical_types = [
     (si.A, "electrical current"),
     (si.C, "electrical charge"),
     (si.V, "electrical potential"),
-    (si.Ohm, {"electrical resistance", "impedance", "reactance"}),
+    (si.Ohm, {"electrical resistance", "electrical impedance", "electrical reactance"}),
     (si.Ohm * si.m, "electrical resistivity"),
     (si.S, "electrical conductance"),
     (si.S / si.m, "electrical conductivity"),
@@ -63,7 +65,7 @@ _units_and_physical_types = [
     (si.A / si.m ** 2, "electrical current density"),
     (si.V / si.m, "electrical field strength"),
     (si.C / si.m ** 2,
-        {"electrical flux density", "surface charge density", "polarization density"}
+        {"electrical flux density", "surface charge density", "polarization density"},
     ),
     (si.C / si.m ** 3, "electrical charge density"),
     (si.F / si.m, "permittivity"),
@@ -169,7 +171,6 @@ def _standardize_physical_type_names(physical_type_input):
     Underscores are treated as spaces so that variable names could
     be identical to physical type names.
     """
-
     if isinstance(physical_type_input, str):
         physical_type_input = {physical_type_input}
 
@@ -187,8 +188,8 @@ def _standardize_physical_type_names(physical_type_input):
 
 class PhysicalType:
     """
-    Represents and provides information on the physical type(s) that are
-    associated with a set of units.
+    Represents the physical type(s) that are dimensionally compatible
+    with a set of units.
 
     Instances of this class should be accessed using the ``physical_type``
     property of `Unit` instances.  This class is not intended to be
@@ -224,13 +225,15 @@ class PhysicalType:
 
     >>> import astropy.units as u
     >>> u.meter.physical_type
-    'length'
+    PhysicalType('length')
 
-    Some units correspond to multiple physical types.
+    Some units are dimensionally compatible with multiple physical types.
+    A pascal is intended to represent pressure or stress, but the unit
+    decomposition is equivalent to that of energy density.
 
     >>> pressure = u.Pa.physical_type
-    >>> print(pressure)
-    {'energy density', 'pressure', 'stress'}
+    >>> pressure
+    PhysicalType({'energy density', 'pressure', 'stress'})
     >>> 'energy density' in pressure
     True
 
@@ -250,26 +253,25 @@ class PhysicalType:
     >>> length = u.pc.physical_type
     >>> area = (u.cm ** 2).physical_type
     >>> length * area
-    'volume'
+    PhysicalType('volume')
     >>> area / length
-    'length'
+    PhysicalType('length')
     >>> length ** 3
-    'volume'
+    PhysicalType('volume')
 
     Unknown physical types are labelled as ``"unknown"``.
 
     >>> (u.s ** 13).physical_type
-    'unknown'
+    PhysicalType('unknown')
 
     Dimensional analysis may be performed for unknown physical types too.
 
     >>> length_to_19th_power = (u.m ** 19).physical_type
     >>> length_to_20th_power = (u.m ** 20).physical_type
-    >>> length_to_19th_power, length_to_20th_power
-    ('unknown', 'unknown')
     >>> length_to_20th_power / length_to_19th_power
-    'length'
+    PhysicalType('length')
     """
+
     def __init__(self, unit, physical_types):
         self._unit = _replace_temperatures_with_kelvin(unit)
         self._physical_type_id = self._unit._get_physical_type_id()
@@ -296,31 +298,42 @@ class PhysicalType:
         equality = self.__eq__(other)
         return not equality if isinstance(equality, bool) else NotImplemented
 
+    @property
+    def _name_string_as_ordered_set(self):
+        return "{" + str(self._physical_type_list)[1:-1] + "}"
+
     def __repr__(self):
-        return repr(str(self)) if len(self._physical_type) == 1 else str(self)
+        if len(self._physical_type) == 1:
+            names = "'" + self._physical_type_list[0] + "'"
+        else:
+            names = self._name_string_as_ordered_set
+        return f"PhysicalType({names})"
 
     def __str__(self):
         if len(self._physical_type) == 1:
-            return list(self._physical_type)[0]
+            return self._physical_type_list[0]
         else:
-            return "{" + str(self._physical_type_list)[1:-1] + "}"
+            return self._name_string_as_ordered_set
 
     @staticmethod
-    def _identify_unit_from_unit_or_physical_type(obj):
+    def _dimensionally_compatible_unit(obj):
         """
         If a unit is passed in, return that unit.  If a physical type is
         passed in, return a unit that corresponds to that physical type.
+        If a real number is passed in, return a dimensionless unit.
         Otherwise, return `NotImplemented`.
         """
         if isinstance(obj, core.UnitBase):
             return _replace_temperatures_with_kelvin(obj)
         elif isinstance(obj, PhysicalType):
             return obj._unit
+        elif isinstance(obj, numbers.Real):
+            return core.dimensionless_unscaled
         else:
             return NotImplemented
 
     def _dimensional_analysis(self, other, operation):
-        other_unit = self._identify_unit_from_unit_or_physical_type(other)
+        other_unit = self._dimensionally_compatible_unit(other)
         if other_unit is NotImplemented:
             return NotImplemented
         other_unit = _replace_temperatures_with_kelvin(other_unit)
@@ -337,7 +350,7 @@ class PhysicalType:
         return self._dimensional_analysis(other, "__truediv__")
 
     def __rtruediv__(self, other):
-        other = self._identify_unit_from_unit_or_physical_type(other)
+        other = self._dimensionally_compatible_unit(other)
         if other is NotImplemented:
             return NotImplemented
         return other.physical_type._dimensional_analysis(self, "__truediv__")
@@ -347,6 +360,15 @@ class PhysicalType:
 
     def __hash__(self):
         return hash(self._physical_type_id)
+
+    def __len__(self):
+        return len(self._physical_type)
+
+    def __array_ufunc__(self):
+        # This prevents operations like Unit(...) * PhysicalType(...)
+        # from returning a Quantity with a PhysicalType instance as the
+        # Quantity's value.
+        pass
 
 
 def _get_names_in_use_except_from(unit):
