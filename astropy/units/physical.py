@@ -364,11 +364,12 @@ class PhysicalType:
     def __len__(self):
         return len(self._physical_type)
 
-    def __array_ufunc__(self):
-        # This prevents operations like Unit(...) * PhysicalType(...)
-        # from returning a Quantity with a PhysicalType instance as the
-        # Quantity's value.
-        pass
+    # We need to prevent operations like where a Unit instance left
+    # multiplies a PhysicalType instance from returning a `Quantity`
+    # instance with a PhysicalType as the value.  We can do this by
+    # preventing np.array from casting a PhysicalType instance as
+    # an object array.
+    __array__ = None
 
 
 def _get_names_in_use_except_from(unit):
