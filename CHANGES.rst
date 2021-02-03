@@ -219,6 +219,8 @@ astropy.units
   ``PhysicalType`` instances can be compared to strings, no code changes
   should be necessary when making comparisons.  The string representations
   of different physical types will differ from previous releases.  [#11204]
+- Calling ``Unit()`` with no argument now returns a dimensionless unit, 
+  as was documented but not implemented. [#11295]
 
 astropy.utils
 ^^^^^^^^^^^^^
