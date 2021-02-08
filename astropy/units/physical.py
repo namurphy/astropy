@@ -19,7 +19,7 @@ from . import misc
 __all__ = ["def_physical_type", "get_physical_type", "PhysicalType"]
 
 _units_and_physical_types = [
-    (core.Unit(1), "dimensionless"),
+    (core.dimensionless_unscaled, "dimensionless"),
     (si.m, "length"),
     (si.m ** 2, "area"),
     (si.m ** 3, "volume"),
@@ -197,7 +197,7 @@ class PhysicalType:
 
     Parameters
     ----------
-    unit : u.Unit
+    unit : `~astropy.units.Unit`
         The unit to be represented by the physical type.
 
     physical_types : `str` or `set` of `str`
@@ -298,7 +298,6 @@ class PhysicalType:
         equality = self.__eq__(other)
         return not equality if isinstance(equality, bool) else NotImplemented
 
-    @property
     def _name_string_as_ordered_set(self):
         return "{" + str(self._physical_type_list)[1:-1] + "}"
 
@@ -306,14 +305,14 @@ class PhysicalType:
         if len(self._physical_type) == 1:
             names = "'" + self._physical_type_list[0] + "'"
         else:
-            names = self._name_string_as_ordered_set
+            names = self._name_string_as_ordered_set()
         return f"PhysicalType({names})"
 
     def __str__(self):
         if len(self._physical_type) == 1:
             return self._physical_type_list[0]
         else:
-            return self._name_string_as_ordered_set
+            return self._name_string_as_ordered_set()
 
     @staticmethod
     def _dimensionally_compatible_unit(obj):
@@ -377,13 +376,11 @@ def _get_names_in_use_except_from(unit):
     Get a `set` containing all of the physical type names in use, except
     for the names that correspond to ``unit``.
     """
-    all_names_in_use = set(_unit_physical_mapping.keys())
+    names_in_use = set(_unit_physical_mapping.keys())
     id = unit._get_physical_type_id()
-    if id in _physical_unit_mapping.keys():
-        names_for_this_unit = set(_physical_unit_mapping[id])
-    else:
-        names_for_this_unit = set()
-    return all_names_in_use - names_for_this_unit
+    known_physical_type = id in _physical_unit_mapping.keys()
+    names_for_unit = set(_physical_unit_mapping[id]) if known_physical_type else set()
+    return names_in_use - names_for_unit
 
 
 def def_physical_type(unit, name):
@@ -397,7 +394,7 @@ def def_physical_type(unit, name):
 
     Parameters
     ----------
-    unit : u.Unit
+    unit : `~astropy.units.Unit`
         The unit to be represented by the physical type.
 
     name : `str` or `set` of `str`
@@ -428,9 +425,8 @@ def def_physical_type(unit, name):
     physical_type_id = unit._get_physical_type_id()
     unit_already_in_use = physical_type_id in _physical_unit_mapping
     if unit_already_in_use:
-        old_physical_type = _physical_unit_mapping[physical_type_id]
-        name |= set(old_physical_type)
         physical_type = _physical_unit_mapping[physical_type_id]
+        name |= set(physical_type)
         physical_type.__init__(unit, name)
     else:
         physical_type = PhysicalType(unit, name)
