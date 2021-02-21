@@ -1,8 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-import os
-import sys
-
 from packaging.version import Version
 import pytest
 import numpy as np
@@ -15,18 +12,17 @@ from astropy.wcs import WCS
 from astropy.io import fits
 from astropy.coordinates import SkyCoord
 
+from astropy.utils.data import get_pkg_data_filename
+
 from astropy.visualization.wcsaxes.core import WCSAxes
 from astropy.visualization.wcsaxes.frame import (
     EllipticalFrame, RectangularFrame, RectangularFrame1D)
 from astropy.visualization.wcsaxes.utils import get_coord_meta
 from astropy.visualization.wcsaxes.transforms import CurvedTransform
 
-mpl_version = Version(matplotlib.__version__)
-MATPLOTLIB_LT_31 = mpl_version < Version('3.1')
-MATPLOTLIB_EQ_33 = mpl_version.major == 3 and mpl_version.minor == 3
+ft_version = Version(matplotlib.ft2font.__freetype_version__)
+FREETYPE_261 = ft_version == Version("2.6.1")
 TEX_UNAVAILABLE = not matplotlib.checkdep_usetex(True)
-
-DATA = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 
 
 def teardown_function(function):
@@ -74,9 +70,6 @@ COORDSYS= 'icrs    '
 """, sep='\n')
 
 
-@pytest.mark.skipif(MATPLOTLIB_LT_31 and sys.version_info >= (3, 9),
-                    reason='PY_SSIZE_T_CLEAN warning with Python 3.9 and '
-                    'Matplotlib 3.0, GH issue 10954')
 @pytest.mark.parametrize('grid_type', ['lines', 'contours'])
 def test_no_numpy_warnings(ignore_matplotlibrc, tmpdir, grid_type):
     ax = plt.subplot(1, 1, 1, projection=WCS(TARGET_HEADER))
@@ -96,7 +89,8 @@ def test_no_numpy_warnings(ignore_matplotlibrc, tmpdir, grid_type):
         w_msg = str(w.message)
         assert ('converting a masked element to nan' in w_msg or
                 'No contour levels were found within the data range' in w_msg or
-                'np.asscalar(a) is deprecated since NumPy v1.16' in w_msg)
+                'np.asscalar(a) is deprecated since NumPy v1.16' in w_msg or
+                'PY_SSIZE_T_CLEAN will be required' in w_msg)
 
 
 def test_invalid_frame_overlay(ignore_matplotlibrc):
@@ -114,7 +108,7 @@ def test_invalid_frame_overlay(ignore_matplotlibrc):
 
 def test_plot_coord_transform(ignore_matplotlibrc):
 
-    twoMASS_k_header = os.path.join(DATA, '2MASS_k_header')
+    twoMASS_k_header = get_pkg_data_filename('data/2MASS_k_header')
     twoMASS_k_header = fits.Header.fromtextfile(twoMASS_k_header)
     fig = plt.figure(figsize=(6, 6))
     ax = fig.add_axes([0.15, 0.15, 0.8, 0.8],
@@ -505,17 +499,19 @@ def test_set_labels_with_coords(ignore_matplotlibrc, frame_class):
         assert ax.coords[i].get_axislabel() == labels[i]
 
 
-# The bounding box calculation is very dependent on Matplotlib versions.
-@pytest.mark.skipif('not MATPLOTLIB_EQ_33')
-def test_bbox_size():
-    # Test for the size of a WCSAxes bbox
+@pytest.mark.parametrize('atol', [0.2, 1.0e-8])
+def test_bbox_size(atol):
+    # Test for the size of a WCSAxes bbox (only have Matplotlib >= 3.0 now)
+    extents = [11.38888888888889, 3.5, 576.0, 432.0]
+
     fig = plt.figure()
     ax = WCSAxes(fig, [0.1, 0.1, 0.8, 0.8])
     fig.add_axes(ax)
     fig.canvas.draw()
     renderer = fig.canvas.renderer
     ax_bbox = ax.get_tightbbox(renderer)
-    assert np.allclose(ax_bbox.x0, 11.38888888888889)
-    assert np.allclose(ax_bbox.x1, 576)
-    assert np.allclose(ax_bbox.y0, 3.5)
-    assert np.allclose(ax_bbox.y1, 432)
+
+    # Enforce strict test only with reference Freetype version
+    if atol < 0.1 and not FREETYPE_261:
+        pytest.xfail("Exact BoundingBox dimensions are only ensured with FreeType 2.6.1")
+    assert np.allclose(ax_bbox.extents, extents, atol=atol)
