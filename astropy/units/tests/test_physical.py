@@ -434,3 +434,7 @@ def test_redundant_physical_type():
     not_length = u.m ** 23
     with pytest.raises(ValueError):
         physical.def_physical_type(not_length, "length")
+
+
+def test_physical_type():
+    assert length.__mul__([]) is NotImplemented
