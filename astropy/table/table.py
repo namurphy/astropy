@@ -78,10 +78,10 @@ _pprint_docs = """
 
     Parameters
     ----------
-    max_lines : int or `None`
+    max_lines : int or None
         Maximum number of lines in table output.
 
-    max_width : int or `None`
+    max_width : int or None
         Maximum character width of output.
 
     show_name : bool
@@ -95,7 +95,7 @@ _pprint_docs = """
     show_dtype : bool
         Include a header row for column dtypes. Default is True.
 
-    align : str or list or tuple or `None`
+    align : str or list or tuple or None
         Left/right alignment of columns. Default is right (None) for all
         columns. Other allowed values are '>', '<', '^', and '0=' for
         right, left, centered, and 0-padded, respectively. A list of
@@ -108,10 +108,10 @@ _pformat_docs = """
 
     Parameters
     ----------
-    max_lines : int or `None`
+    max_lines : int or None
         Maximum number of rows to output
 
-    max_width : int or `None`
+    max_width : int or None
         Maximum character width of output
 
     show_name : bool
@@ -128,19 +128,19 @@ _pformat_docs = """
     html : bool
         Format the output as an HTML table. Default is False.
 
-    tableid : str or `None`
+    tableid : str or None
         An ID tag for the table; only used if html is set.  Default is
         "table{id}", where id is the unique integer id of the table object,
         id(self)
 
-    align : str or list or tuple or `None`
+    align : str or list or tuple or None
         Left/right alignment of columns. Default is right (None) for all
         columns. Other allowed values are '>', '<', '^', and '0=' for
         right, left, centered, and 0-padded, respectively. A list of
         strings can be provided for alignment of tables with multiple
         columns.
 
-    tableclass : str or list of str or `None`
+    tableclass : str or list of str or None
         CSS classes for the table; only used if html is set.  Default is
         None.
 
@@ -310,12 +310,12 @@ class TableColumns(OrderedDict):
 
         Parameters
         ----------
-        cls : class or tuple of classes
+        cls : class or tuple thereof
             Column class (including mixin) or tuple of Column classes.
 
         Returns
         -------
-        col_list : list of Columns
+        col_list : list of `Column`
             List of Column objects which are instances of given classes.
         """
         cols = [col for col in self.values() if isinstance(col, cls)]
@@ -327,12 +327,12 @@ class TableColumns(OrderedDict):
 
         Parameters
         ----------
-        cls : class or tuple of classes
+        cls : class or tuple thereof
             Column class (including mixin) or tuple of Column classes.
 
         Returns
         -------
-        col_list : list of Columns
+        col_list : list of `Column`
             List of Column objects which are not instances of given classes.
         """
         cols = [col for col in self.values() if not isinstance(col, cls)]
@@ -556,7 +556,7 @@ class Table:
 
     Parameters
     ----------
-    data : numpy ndarray, dict, list, Table, or table-like object, optional
+    data : numpy ndarray, dict, list, table-like object, optional
         Data to initialize table.
     masked : bool, optional
         Specify whether the table is masked.
@@ -570,7 +570,7 @@ class Table:
         Copy the input data. If the input is a Table the ``meta`` is always
         copied regardless of the ``copy`` parameter.
         Default is True.
-    rows : numpy ndarray, list of lists, optional
+    rows : numpy ndarray, list of list, optional
         Row-oriented data for table instead of ``data`` argument.
     copy_indices : bool, optional
         Copy any indices in the input data. Default is True.
@@ -617,8 +617,9 @@ class Table:
 
         Returns
         -------
-        table_array : np.ndarray (unmasked) or np.ma.MaskedArray (masked)
-            Copy of table as a numpy structured array
+        table_array : array or `~numpy.ma.MaskedArray`
+            Copy of table as a numpy structured array.
+            ndarray for unmasked or `~numpy.ma.MaskedArray` for masked.
         """
         masked = self.masked or self.has_masked_columns or self.has_masked_values
         empty_init = ma.empty if masked else np.empty
@@ -934,7 +935,7 @@ class Table:
 
         Returns
         -------
-        filled_table : Table
+        filled_table : `~astropy.table.Table`
             New table with masked values filled
         """
         if self.masked or self.has_masked_columns or self.has_masked_values:
@@ -1516,11 +1517,40 @@ class Table:
         return out
 
     def _repr_html_(self):
-        return self._base_repr_(html=True, max_width=-1,
-                                tableclass=conf.default_notebook_table_class)
+        out = self._base_repr_(html=True, max_width=-1,
+                               tableclass=conf.default_notebook_table_class)
+        # Wrap <table> in <div>. This follows the pattern in pandas and allows
+        # table to be scrollable horizontally in VS Code notebook display.
+        out = f'<div>{out}</div>'
+        return out
 
     def __repr__(self):
         return self._base_repr_(html=False, max_width=None)
+
+    def _repr_latex_(self):
+        """
+        Format a Table object into the LaTeX format, and return it as a string.
+
+        Notes
+        -----
+        Uses `astropy.io.ascii.latex.Latex.write()` function to change
+        the Table format to LaTeX. The default LaTeX formatting options defined
+        in ``latex.Latex`` are assumed if the ``table.Table.meta`` dictionary
+        doesn't already contain a ``latexdict`` keyword.
+        See: `astropy.io.ascii.Latex`
+
+        A new key ``latexdict`` corresponding to ``Latex.latex`` dictionary of
+        ``astropy.io.ascii.latex`` object is added to ``table.Table.meta``.
+        It contains the LaTeX formatting options for the table used.
+        """
+        from astropy.io import ascii
+
+        latexdict = self.meta.get('latexdict', {})
+        lTable = ascii.latex.Latex(latexdict=latexdict)
+        lines = lTable.write(table=self)
+        self.meta['latexdict'] = lTable.latex
+
+        return '\n'.join(lines)
 
     def __str__(self):
         return '\n'.join(self.pformat())
@@ -1629,12 +1659,12 @@ class Table:
 
         Parameters
         ----------
-        tableid : str or `None`
+        tableid : str or None
             An html ID tag for the table.  Default is ``table{id}-XXX``, where
             id is the unique integer id of the table object, id(self), and XXX
             is a random number to avoid conflicts when printing the same table
             multiple times.
-        table_class : str or `None`
+        table_class : str or None
             A string with a list of HTML classes used to style the table.
             The special default string ('astropy-default') means that the string
             will be retrieved from the configuration item
@@ -1713,10 +1743,10 @@ class Table:
             Passed to the `astropy.table.JSViewer` init. Defaults to
             ``{'use_local_files': True}`` which means that the JavaScript
             libraries will be served from local copies.
-        tableid : str or `None`
+        tableid : str or None
             An html ID tag for the table.  Default is ``table{id}``, where id
             is the unique integer id of the table object, id(self).
-        table_class : str or `None`
+        table_class : str or None
             A string with a list of HTML classes used to style the table.
             Default is "display compact", and other possible values can be
             found in https://www.datatables.net/manual/styling/classes
@@ -1839,7 +1869,7 @@ class Table:
         max_lines : int
             Maximum number of lines in table output
 
-        max_width : int or `None`
+        max_width : int or None
             Maximum character width of output
 
         show_name : bool
@@ -2089,7 +2119,7 @@ class Table:
         ----------
         col : object
             Data object for the new column
-        index : int or `None`
+        index : int or None
             Insert column before this position or at end (default).
         name : str
             Column name
@@ -2097,7 +2127,7 @@ class Table:
             Uniquify column name if it already exist. Default is False.
         copy : bool
             Make a copy of the new column. Default is True.
-        default_name : str or `None`
+        default_name : str or None
             Name to use if both ``name`` and ``col.info.name`` are not available.
             Defaults to ``col{number_of_columns}``.
 
@@ -2220,9 +2250,9 @@ class Table:
 
         Parameters
         ----------
-        cols : list of objects
+        cols : list of object
             List of data objects for the new columns
-        indexes : list of ints or `None`
+        indexes : list of int or None
             Insert column before this position or at end (default).
         names : list of str
             Column names
@@ -2373,8 +2403,8 @@ class Table:
         ----------
         name : str
             Name of column to replace
-        col : column object (list, ndarray, Column, etc)
-            New column object to replace the existing column
+        col : `~astropy.table.Column` or `~numpy.ndarray` or sequence
+            New column object to replace the existing column.
         copy : bool
             Make copy of the input ``col``, default=True
 
@@ -2446,7 +2476,7 @@ class Table:
 
         Parameters
         ----------
-        row_specifier : slice, int, or array of ints
+        row_specifier : slice or int or array of int
             Specification for rows to remove
 
         Examples
@@ -2521,7 +2551,8 @@ class Table:
 
         Returns
         -------
-        rows : iterator returning tuples of row values
+        rows : iterable
+            Iterator returns tuples of row values
 
         Examples
         --------
@@ -2895,9 +2926,9 @@ class Table:
 
         Parameters
         ----------
-        vals : tuple, list, dict or `None`
+        vals : tuple, list, dict or None
             Use the specified values in the new row
-        mask : tuple, list, dict or `None`
+        mask : tuple, list, dict or None
             Use the specified mask values in the new row
 
         Examples
@@ -2944,9 +2975,9 @@ class Table:
 
         Parameters
         ----------
-        vals : tuple, list, dict or `None`
+        vals : tuple, list, dict or None
             Use the specified values in the new row
-        mask : tuple, list, dict or `None`
+        mask : tuple, list, dict or None
             Use the specified mask values in the new row
         """
         colnames = self.colnames
@@ -3412,7 +3443,7 @@ class Table:
 
         Parameters
         ----------
-        other : Table-like object or list or scalar
+        other : table-like object or list or scalar
              Object to compare with table
 
         Examples
@@ -3832,7 +3863,7 @@ class QTable(Table):
 
     Parameters
     ----------
-    data : numpy ndarray, dict, list, Table, or table-like object, optional
+    data : numpy ndarray, dict, list, table-like object, optional
         Data to initialize table.
     masked : bool, optional
         Specify whether the table is masked.
@@ -3844,7 +3875,7 @@ class QTable(Table):
         Metadata associated with the table.
     copy : bool, optional
         Copy the input data. Default is True.
-    rows : numpy ndarray, list of lists, optional
+    rows : numpy ndarray, list of list, optional
         Row-oriented data for table instead of ``data`` argument.
     copy_indices : bool, optional
         Copy any indices in the input data. Default is True.

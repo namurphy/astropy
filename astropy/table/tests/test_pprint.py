@@ -46,13 +46,13 @@ class TestMultiD():
         nbclass = table.conf.default_notebook_table_class
         masked = 'masked=True ' if t.masked else ''
         assert t._repr_html_().splitlines() == [
-            f'<i>{table_type.__name__} {masked}length=2</i>',
+            f'<div><i>{table_type.__name__} {masked}length=2</i>',
             f'<table id="table{id(t)}" class="{nbclass}">',
             '<thead><tr><th>col0 [2]</th><th>col1 [2]</th><th>col2 [2]</th></tr></thead>',
             '<thead><tr><th>int64</th><th>int64</th><th>int64</th></tr></thead>',
             '<tr><td>1 .. 2</td><td>3 .. 4</td><td>5 .. 6</td></tr>',
             '<tr><td>10 .. 20</td><td>30 .. 40</td><td>50 .. 60</td></tr>',
-            '</table>']
+            '</table></div>']
 
         t = table_type([arr])
         lines = t.pformat()
@@ -87,12 +87,12 @@ class TestMultiD():
         nbclass = table.conf.default_notebook_table_class
         masked = 'masked=True ' if t.masked else ''
         assert t._repr_html_().splitlines() == [
-            f'<i>{table_type.__name__} {masked}length=2</i>',
+            f'<div><i>{table_type.__name__} {masked}length=2</i>',
             f'<table id="table{id(t)}" class="{nbclass}">',
             '<thead><tr><th>col0 [1,1]</th><th>col1 [1,1]</th><th>col2 [1,1]</th></tr></thead>',
             '<thead><tr><th>int64</th><th>int64</th><th>int64</th></tr></thead>',
             '<tr><td>1</td><td>3</td><td>5</td></tr>', '<tr><td>10</td><td>30</td><td>50</td></tr>',
-            '</table>']
+            '</table></div>']
 
         t = table_type([arr])
         lines = t.pformat()
@@ -107,14 +107,14 @@ def test_html_escaping():
     t = table.Table([('<script>alert("gotcha");</script>', 2, 3)])
     nbclass = table.conf.default_notebook_table_class
     assert t._repr_html_().splitlines() == [
-        '<i>Table length=3</i>',
+        '<div><i>Table length=3</i>',
         f'<table id="table{id(t)}" class="{nbclass}">',
         '<thead><tr><th>col0</th></tr></thead>',
         '<thead><tr><th>str33</th></tr></thead>',
         '<tr><td>&lt;script&gt;alert(&quot;gotcha&quot;);&lt;/script&gt;</td></tr>',
         '<tr><td>2</td></tr>',
         '<tr><td>3</td></tr>',
-        '</table>']
+        '</table></div>']
 
 
 @pytest.mark.usefixtures('table_type')
@@ -912,3 +912,42 @@ class TestColumnsShowHide:
         with t.pprint_exclude_names.set('a??'):
             out = t.pformat_all()
         assert out == exp
+
+
+def test_repr_latex():
+    """
+    Tests the _repr_latex_ method of astropy.table.Table class.
+    Output should be a latex formatted table returned as a string.
+    Test for PR related to issue #3972.
+    """
+    a = [1, 2, 3, 5]
+    b = np.array([4, 5, 6, 5])
+    c = ['hello', 'konichiwa', 'namaskar', 'guten morgen']
+    d = [2, 3, 5, 10] * u.m/u.s**2
+    t = Table([a, b, c, d], names=('val', 'val1', 'greeting', 'speed'))
+
+    lTable1 = [r'\begin{table}',
+               r'\begin{tabular}{cccc}',
+               r'val & val1 & greeting & speed \\',
+               r' &  &  & $\mathrm{m\,s^{-2}}$ \\',
+               r'1 & 4 & hello & 2.0 \\',
+               r'2 & 5 & konichiwa & 3.0 \\',
+               r'3 & 6 & namaskar & 5.0 \\',
+               r'5 & 5 & guten morgen & 10.0 \\',
+               r'\end{tabular}',
+               r'\end{table}']
+    assert t._repr_latex_().splitlines() == lTable1
+
+    lTable2 = [r'\begin{table}',
+               r'\caption{this is a table}',
+               r'\begin{tabular}{cccc}',
+               r'val & val1 & greeting & speed \\',
+               r' &  &  & $\mathrm{m\,s^{-2}}$ \\',
+               r'1 & 4 & hello & 2.0 \\',
+               r'2 & 5 & konichiwa & 3.0 \\',
+               r'3 & 6 & namaskar & 5.0 \\',
+               r'5 & 5 & guten morgen & 10.0 \\',
+               r'\end{tabular}',
+               r'\end{table}']
+    t.meta['latexdict'] = {'caption':'this is a table'}
+    assert t._repr_latex_().splitlines() == lTable2
