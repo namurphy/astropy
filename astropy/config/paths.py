@@ -62,14 +62,12 @@ def _find_home():
                     else:
                         raise OSError('Could not find windows home directory to '
                                       'search for astropy config dir')
+        elif 'HOME' in os.environ:
+            homedir = os.environ['HOME']
         else:
-            # for other platforms, try HOME, although it probably isn't there
-            if 'HOME' in os.environ:
-                homedir = os.environ['HOME']
-            else:
-                raise OSError('Could not find a home directory to search for '
-                              'astropy config dir - are you on an unsupported '
-                              'platform?')
+            raise OSError('Could not find a home directory to search for '
+                          'astropy config dir - are you on an unsupported '
+                          'platform?')
     return homedir
 
 

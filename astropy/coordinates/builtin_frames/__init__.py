@@ -115,7 +115,7 @@ def make_transform_graph_docs(transform_graph):
 
     """
 
-    docstr = dedent(docstr) + '        ' + graphstr.replace('\n', '\n        ')
+    docstr = f'{dedent(docstr)}        ' + graphstr.replace('\n', '\n        ')
 
     # colors are in dictionary at the bottom of transformations.py
     from astropy.coordinates.transformations import trans_to_color
@@ -139,7 +139,7 @@ def make_transform_graph_docs(transform_graph):
             {nl.join(html_list_items)}
         </ul>
     """
-    docstr = docstr + dedent(graph_legend)
+    docstr += dedent(graph_legend)
 
     return docstr
 

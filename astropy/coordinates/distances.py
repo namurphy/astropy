@@ -116,11 +116,11 @@ class Distance(u.SpecificTypeQuantity):
                 raise ValueError('A `cosmology` was given but `z` was not '
                                  'provided in Distance constructor')
 
-            value_msg = ('Should given only one of `value`, `z`, `distmod`, or '
-                         '`parallax` in Distance constructor.')
             n_not_none = np.sum([x is not None
                                  for x in [value, z, distmod, parallax]])
             if n_not_none > 1:
+                value_msg = ('Should given only one of `value`, `z`, `distmod`, or '
+                             '`parallax` in Distance constructor.')
                 raise ValueError(value_msg)
 
             if distmod is not None:

@@ -82,9 +82,8 @@ def _parse_response(resp_data):
 
     if matched is None:
         return None, None
-    else:
-        ra, dec = matched.groups()
-        return ra, dec
+    ra, dec = matched.groups()
+    return ra, dec
 
 
 def get_icrs_coordinates(name, parse=False, cache=False):
@@ -133,11 +132,6 @@ def get_icrs_coordinates(name, parse=False, cache=False):
         from . import jparser
         if jparser.search(name):
             return jparser.to_skycoord(name)
-        else:
-            # if the parser failed, fall back to sesame query.
-            pass
-            # maybe emit a warning instead of silently falling back to sesame?
-
     database = sesame_database.get()
     # The web API just takes the first letter of the database name
     db = database.upper()[0]
@@ -193,6 +187,4 @@ def get_icrs_coordinates(name, parse=False, cache=False):
 
         raise NameResolveError(err)
 
-    # Return SkyCoord object
-    sc = SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')
-    return sc
+    return SkyCoord(ra=ra, dec=dec, unit=(u.degree, u.degree), frame='icrs')

@@ -62,7 +62,7 @@ class IllegalHourWarning(AstropyWarning):
     def __str__(self):
         message = f"'hour' was found  to be '{self.hour}', which is not in range (-24, 24)."
         if self.alternativeactionstr is not None:
-            message += ' ' + self.alternativeactionstr
+            message += f' {self.alternativeactionstr}'
         return message
 
 
@@ -105,7 +105,7 @@ class IllegalMinuteWarning(AstropyWarning):
     def __str__(self):
         message = f"'minute' was found  to be '{self.minute}', which is not in range [0,60)."
         if self.alternativeactionstr is not None:
-            message += ' ' + self.alternativeactionstr
+            message += f' {self.alternativeactionstr}'
         return message
 
 
@@ -147,7 +147,7 @@ class IllegalSecondWarning(AstropyWarning):
     def __str__(self):
         message = f"'second' was found  to be '{self.second}', which is not in range [0,60)."
         if self.alternativeactionstr is not None:
-            message += ' ' + self.alternativeactionstr
+            message += f' {self.alternativeactionstr}'
         return message
 
 

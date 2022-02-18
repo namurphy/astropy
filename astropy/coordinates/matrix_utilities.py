@@ -64,11 +64,7 @@ def rotation_matrix(angle, axis='z', unit=None):
     if isinstance(angle, u.Quantity):
         angle = angle.to_value(u.radian)
     else:
-        if unit is None:
-            angle = np.deg2rad(angle)
-        else:
-            angle = u.Unit(unit).to(u.rad, angle)
-
+        angle = np.deg2rad(angle) if unit is None else u.Unit(unit).to(u.rad, angle)
     s = np.sin(angle)
     c = np.cos(angle)
 
@@ -81,7 +77,7 @@ def rotation_matrix(angle, axis='z', unit=None):
         R = (axis[..., np.newaxis] * axis[..., np.newaxis, :] *
              (1. - c)[..., np.newaxis, np.newaxis])
 
-        for i in range(0, 3):
+        for i in range(3):
             R[..., i, i] += c
             a1 = (i + 1) % 3
             a2 = (i + 2) % 3

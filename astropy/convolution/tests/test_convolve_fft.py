@@ -45,15 +45,15 @@ options_preserve_nan = list(itertools.product(BOUNDARY_OPTIONS,
 
 
 def expected_boundary_warning(boundary=None):
-    # Helper that returns the appropriate context manager for the boundary=None
-    # warning depending on the value of boundary.
-    if boundary is None:
-        ctx = pytest.warns(AstropyUserWarning,
-                           match='The convolve_fft version of boundary=None '
-                                 'is equivalent to the convolve boundary=\'fill\'')
-    else:
-        ctx = nullcontext()
-    return ctx
+    return (
+        pytest.warns(
+            AstropyUserWarning,
+            match='The convolve_fft version of boundary=None '
+            'is equivalent to the convolve boundary=\'fill\'',
+        )
+        if boundary is None
+        else nullcontext()
+    )
 
 
 def assert_floatclose(x, y):
@@ -188,16 +188,9 @@ class TestConvolve1D:
             'average_nozeros': np.array([0.5, 4 / 3., 1.5], dtype='float64'),
         }
 
-        if normalize_kernel:
-            answer_key = 'average'
-        else:
-            answer_key = 'sum'
-
-        if boundary == 'wrap':
-            answer_key += '_wrap'
-        else:
-            # average = average_zeros; sum = sum_zeros
-            answer_key += '_zeros'
+        answer_key = ('average' if normalize_kernel else 'sum') + (
+            '_wrap' if boundary == 'wrap' else '_zeros'
+        )
 
         assert_floatclose(z, answer_dict[answer_key])
 
@@ -303,18 +296,11 @@ class TestConvolve1D:
 
         for key in list(answer_dict.keys()):
             if 'sum' in key:
-                answer_dict[key+"_interpnan"] = answer_dict[key] * 3./2.
+                answer_dict[f'{key}_interpnan'] = answer_dict[key] * 3./2.
 
-        if normalize_kernel:
-            answer_key = 'average'
-        else:
-            answer_key = 'sum'
-
-        if boundary == 'wrap':
-            answer_key += '_wrap'
-        else:
-            # average = average_zeros; sum = sum_zeros
-            answer_key += '_zeros'
+        answer_key = ('average' if normalize_kernel else 'sum') + (
+            '_wrap' if boundary == 'wrap' else '_zeros'
+        )
 
         if nan_treatment == 'interpolate':
             answer_key += '_interpnan'
@@ -527,11 +513,7 @@ class TestConvolve2D:
         answer_dict['average_withzeros'] = answer_dict['sum'] / 9.
         answer_dict['sum_withzeros'] = answer_dict['sum']
 
-        if normalize_kernel:
-            answer_key = 'average'
-        else:
-            answer_key = 'sum'
-
+        answer_key = 'average' if normalize_kernel else 'sum'
         if boundary == 'wrap':
             answer_key += '_wrap'
         elif nan_treatment == 'fill':
@@ -636,11 +618,7 @@ class TestConvolve2D:
         answer_dict['sum_withzeros_interpnan'] = answer_dict['sum']
         answer_dict['sum_wrap_interpnan'] = answer_dict['sum_wrap'] * 9/8.
 
-        if normalize_kernel:
-            answer_key = 'average'
-        else:
-            answer_key = 'sum'
-
+        answer_key = 'average' if normalize_kernel else 'sum'
         if boundary == 'wrap':
             answer_key += '_wrap'
         elif nan_treatment == 'fill':

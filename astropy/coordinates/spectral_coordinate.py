@@ -137,10 +137,7 @@ def attach_zero_velocities(coord):
 
 
 def _get_velocities(coord):
-    if 's' in coord.data.differentials:
-        return coord.velocity
-    else:
-        return ZERO_VELOCITIES
+    return coord.velocity if 's' in coord.data.differentials else ZERO_VELOCITIES
 
 
 class SpectralCoord(SpectralQuantity):
@@ -199,10 +196,13 @@ class SpectralCoord(SpectralQuantity):
         # manually specified radial velocity or redshift. So if a target and
         # observer are both specified, we can't also accept a radial velocity
         # or redshift.
-        if target is not None and observer is not None:
-            if radial_velocity is not None or redshift is not None:
-                raise ValueError("Cannot specify radial velocity or redshift if both "
-                                 "target and observer are specified")
+        if (
+            target is not None
+            and observer is not None
+            and (radial_velocity is not None or redshift is not None)
+        ):
+            raise ValueError("Cannot specify radial velocity or redshift if both "
+                             "target and observer are specified")
 
         # We only deal with redshifts here and in the redshift property.
         # Otherwise internally we always deal with velocities.
@@ -228,9 +228,8 @@ class SpectralCoord(SpectralQuantity):
         # As mentioned above, we should only specify the radial velocity
         # manually if either or both the observer and target are not
         # specified.
-        if observer is None or target is None:
-            if radial_velocity is None:
-                radial_velocity = getattr(value, 'radial_velocity', None)
+        if (observer is None or target is None) and radial_velocity is None:
+            radial_velocity = getattr(value, 'radial_velocity', None)
 
         obj._radial_velocity = radial_velocity
         obj._observer = cls._validate_coordinate(observer, label='observer')
@@ -457,10 +456,7 @@ class SpectralCoord(SpectralQuantity):
         respect to the *observer*, not the origin of the frame.
         """
         if self._observer is None or self._target is None:
-            if self._radial_velocity is None:
-                return 0 * KMS
-            else:
-                return self._radial_velocity
+            return 0 * KMS if self._radial_velocity is None else self._radial_velocity
         else:
             return self._calculate_radial_velocity(self._observer, self._target,
                                                    as_scalar=True)
@@ -510,10 +506,7 @@ class SpectralCoord(SpectralQuantity):
 
         vel_mag = pos_hat.dot(d_vel)
 
-        if as_scalar:
-            return vel_mag
-        else:
-            return vel_mag * pos_hat
+        return vel_mag if as_scalar else vel_mag * pos_hat
 
     @staticmethod
     def _normalized_position_vector(observer, target):
@@ -540,9 +533,7 @@ class SpectralCoord(SpectralQuantity):
         # Reset any that are 0 to 1 to avoid nans from 0/0
         dp_norm[dp_norm == 0] = 1 * dp_norm.unit
 
-        pos_hat = d_pos / dp_norm
-
-        return pos_hat
+        return d_pos / dp_norm
 
     @u.quantity_input(velocity=u.km/u.s)
     def with_observer_stationary_relative_to(self, frame, velocity=None, preserve_observer_frame=False):
@@ -627,9 +618,7 @@ class SpectralCoord(SpectralQuantity):
         # Apply transformation to data
         new_data = _apply_relativistic_doppler_shift(self, fin_obs_vel - init_obs_vel)
 
-        new_coord = self.replicate(value=new_data, observer=observer)
-
-        return new_coord
+        return self.replicate(value=new_data, observer=observer)
 
     def with_radial_velocity_shift(self, target_shift=None, observer_shift=None):
         """
@@ -728,7 +717,7 @@ class SpectralCoord(SpectralQuantity):
 
     def __repr__(self):
 
-        prefixstr = '<' + self.__class__.__name__ + ' '
+        prefixstr = f'<{self.__class__.__name__} '
 
         try:
             radial_velocity = self.radial_velocity
@@ -751,12 +740,20 @@ class SpectralCoord(SpectralQuantity):
                 repr_items.append('    observer to target (computed from above):')
             else:
                 repr_items.append('    observer to target:')
-            repr_items.append(f'      radial_velocity={radial_velocity}')
-            repr_items.append(f'      redshift={redshift}')
+            repr_items.extend(
+                (
+                    f'      radial_velocity={radial_velocity}',
+                    f'      redshift={redshift}',
+                )
+            )
 
         if self.doppler_rest is not None or self.doppler_convention is not None:
-            repr_items.append(f'    doppler_rest={self.doppler_rest}')
-            repr_items.append(f'    doppler_convention={self.doppler_convention}')
+            repr_items.extend(
+                (
+                    f'    doppler_rest={self.doppler_rest}',
+                    f'    doppler_convention={self.doppler_convention}',
+                )
+            )
 
         arrstr = np.array2string(self.view(np.ndarray), separator=', ',
                                  prefix='  ')
@@ -764,7 +761,7 @@ class SpectralCoord(SpectralQuantity):
         if len(repr_items) == 1:
             repr_items[0] += f'{arrstr}{self._unitstr:s}'
         else:
-            repr_items[1] = '   (' + repr_items[1].lstrip()
+            repr_items[1] = f'   ({repr_items[1].lstrip()}'
             repr_items[-1] += ')'
             repr_items.append(f'  {arrstr}{self._unitstr:s}')
 

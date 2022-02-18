@@ -211,11 +211,7 @@ def online_help(query):
     import webbrowser
 
     version = __version__
-    if 'dev' in version:
-        version = 'latest'
-    else:
-        version = 'v' + version
-
+    version = 'latest' if 'dev' in version else f'v{version}'
     url = f"https://docs.astropy.org/en/{version}/search.html?{urlencode({'q': query})}"
     webbrowser.open(url)
 
@@ -230,11 +226,13 @@ from types import ModuleType as __module_type__  # noqa: E402
 # Clean up top-level namespace--delete everything that isn't in __dir_inc__
 # or is a magic attribute, and that isn't a submodule of this package
 for varname in dir():
-    if not ((varname.startswith('__') and varname.endswith('__')) or
-            varname in __dir_inc__ or
-            (varname[0] != '_' and
-                isinstance(locals()[varname], __module_type__) and
-                locals()[varname].__name__.startswith(__name__ + '.'))):
+    if not (
+        (varname.startswith('__') and varname.endswith('__'))
+        or varname in __dir_inc__
+        or varname[0] != '_'
+        and isinstance(locals()[varname], __module_type__)
+        and locals()[varname].__name__.startswith(f'{__name__}.')
+    ):
         # The last clause in the the above disjunction deserves explanation:
         # When using relative imports like ``from .. import config``, the
         # ``config`` variable is automatically created in the namespace of

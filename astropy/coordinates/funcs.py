@@ -252,15 +252,8 @@ def get_constellation(coord, short_name=False, constellation_list='iau'):
     else:
         raise ValueError(f'Could not find constellation for coordinates {constel_coord[notided]}')
 
-    if short_name:
-        names = ctable['name'][constellidx]
-    else:
-        names = cnames_long[constellidx]
-
-    if isscalar:
-        return names[0]
-    else:
-        return names
+    names = ctable['name'][constellidx] if short_name else cnames_long[constellidx]
+    return names[0] if isscalar else names
 
 
 def _concatenate_components(reps_difs, names):

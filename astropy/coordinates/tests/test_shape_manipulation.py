@@ -325,10 +325,7 @@ class TestManipulation():
         assert np.may_share_memory(s0_squeeze.data.lat, self.s0.data.lat)
 
     def test_add_dimension(self, method):
-        if method:
-            s0_adddim = self.s0[:, np.newaxis, :]
-        else:
-            s0_adddim = np.expand_dims(self.s0, 1)
+        s0_adddim = self.s0[:, np.newaxis, :] if method else np.expand_dims(self.s0, 1)
         assert s0_adddim.shape == (6, 1, 7)
         assert np.all(s0_adddim.data.lon == self.s0.data.lon[:, np.newaxis, :])
         assert np.may_share_memory(s0_adddim.data.lat, self.s0.data.lat)

@@ -402,7 +402,7 @@ class AstropyLogger(Logger):
             with logger.log_to_file('myfile.log'):
                 # your code here
         '''
-        encoding = conf.log_file_encoding if conf.log_file_encoding else None
+        encoding = conf.log_file_encoding or None
         fh = logging.FileHandler(filename, encoding=encoding)
         if filter_level is not None:
             fh.setLevel(filter_level)
@@ -499,7 +499,7 @@ class AstropyLogger(Logger):
                 else:
                     log_file_path = os.path.expanduser(log_file_path)
 
-                encoding = conf.log_file_encoding if conf.log_file_encoding else None
+                encoding = conf.log_file_encoding or None
                 fh = logging.FileHandler(log_file_path, encoding=encoding)
             except OSError as e:
                 warnings.warn(
@@ -529,11 +529,7 @@ class StreamHandler(logging.StreamHandler):
         '''
         The formatter for stderr
         '''
-        if record.levelno <= logging.INFO:
-            stream = sys.stdout
-        else:
-            stream = sys.stderr
-
+        stream = sys.stdout if record.levelno <= logging.INFO else sys.stderr
         if record.levelno < logging.DEBUG or not _conf.use_color:
             print(record.levelname, end='', file=stream)
         else:
@@ -549,7 +545,7 @@ class StreamHandler(logging.StreamHandler):
             else:
                 color_print(record.levelname, 'red', end='', file=stream)
         record.message = f"{record.msg} [{record.origin:s}]"
-        print(": " + record.message, file=stream)
+        print(f': {record.message}', file=stream)
 
 
 class FilterOrigin:

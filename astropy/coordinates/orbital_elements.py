@@ -226,7 +226,7 @@ def calc_moon(t):
 
     # ensure units
     suml = suml*u.microdegree
-    sumb = sumb*u.microdegree
+    sumb *= u.microdegree
 
     # nutation of longitude
     jd1, jd2 = get_jd12(t, 'tt')

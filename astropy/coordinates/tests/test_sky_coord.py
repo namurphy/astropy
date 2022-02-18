@@ -83,10 +83,9 @@ for rt_frame0 in rt_frames:
         for equinox0 in (None, 'J1975.0'):
             for obstime0 in (None, 'J1980.0'):
                 for equinox1 in (None, 'J1975.0'):
-                    for obstime1 in (None, 'J1980.0'):
-                        rt_sets.append((rt_frame0, rt_frame1,
+                    rt_sets.extend((rt_frame0, rt_frame1,
                                         equinox0, equinox1,
-                                        obstime0, obstime1))
+                                        obstime0, obstime1) for obstime1 in (None, 'J1980.0'))
 rt_args = ('frame0', 'frame1', 'equinox0', 'equinox1', 'obstime0', 'obstime1')
 
 
@@ -99,20 +98,20 @@ def test_round_tripping(frame0, frame1, equinox0, equinox1, obstime0, obstime1):
     attrs1 = {'equinox': equinox1, 'obstime': obstime1}
 
     # Remove None values
-    attrs0 = dict((k, v) for k, v in attrs0.items() if v is not None)
-    attrs1 = dict((k, v) for k, v in attrs1.items() if v is not None)
+    attrs0 = {k: v for k, v in attrs0.items() if v is not None}
+    attrs1 = {k: v for k, v in attrs1.items() if v is not None}
 
     # Go out and back
     sc = SkyCoord(RA, DEC, frame=frame0, **attrs0)
 
     # Keep only frame attributes for frame1
-    attrs1 = dict((attr, val) for attr, val in attrs1.items()
-                  if attr in frame1.get_frame_attr_names())
+    attrs1 = {attr: val for attr, val in attrs1.items()
+                      if attr in frame1.get_frame_attr_names()}
     sc2 = sc.transform_to(frame1(**attrs1))
 
     # When coming back only keep frame0 attributes for transform_to
-    attrs0 = dict((attr, val) for attr, val in attrs0.items()
-                  if attr in frame0.get_frame_attr_names())
+    attrs0 = {attr: val for attr, val in attrs0.items()
+                      if attr in frame0.get_frame_attr_names()}
     # also, if any are None, fill in with defaults
     for attrnm in frame0.get_frame_attr_names():
         if attrs0.get(attrnm, None) is None:
@@ -351,8 +350,8 @@ def test_equal():
     ne = sc1 != sc2
     assert np.all(eq == [True, False])
     assert np.all(ne == [False, True])
-    assert (sc1[0] == sc2[0]) == True  # noqa  (numpy True not Python True)
-    assert (sc1[0] != sc2[0]) == False  # noqa
+    assert sc1[0] == sc2[0]
+    assert sc1[0] == sc2[0]
 
     # Broadcasting
     eq = sc1[0] == sc2
@@ -368,8 +367,8 @@ def test_equal():
     ne = sc1 != sc2
     assert np.all(eq == [True, False])
     assert np.all(ne == [False, True])
-    assert (sc1[0] == sc2[0]) == True  # noqa
-    assert (sc1[0] != sc2[0]) == False  # noqa
+    assert sc1[0] == sc2[0]
+    assert sc1[0] == sc2[0]
 
 
 def test_equal_exceptions():
@@ -723,7 +722,7 @@ def test_ops():
     assert len(sc_arr[:1]) == 1
     # A scalar shouldn't be indexable
     with pytest.raises(TypeError):
-        sc[0:]
+        sc[:]
     # but it should be possible to just get an item
     sc_item = sc[()]
     assert sc_item.shape == ()

@@ -285,8 +285,8 @@ def convolve(array, kernel, boundary='fill', fill_value=0.,
     # not set
     if preserve_nan or nan_treatment == 'fill':
         initially_nan = np.isnan(array_internal)
-        if nan_treatment == 'fill':
-            array_internal[initially_nan] = fill_value
+    if nan_treatment == 'fill':
+        array_internal[initially_nan] = fill_value
 
     # Avoid any memory allocation within the C code. Allocate output array
     # here and pass through instead.

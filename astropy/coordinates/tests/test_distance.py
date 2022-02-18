@@ -140,7 +140,7 @@ def test_distance_change():
     c1 = ICRS(ra, dec, Distance(1, unit=u.kpc))
 
     oldx = c1.cartesian.x.value
-    assert (oldx - 0.35284083171901953) < 1e-10
+    assert oldx < 0.35284083181901954
 
     # first make sure distances are immutible
     with pytest.raises(AttributeError):

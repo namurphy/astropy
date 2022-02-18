@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
         # Some sources are not observable at the specified time and therefore don't
         # have entries in the rv output file
-        if len(lis_lines) == 0:
+        if not lis_lines:
             continue
 
         # If there are lines, we pick one at random. Note that we can't get rv to

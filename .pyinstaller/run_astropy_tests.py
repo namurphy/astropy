@@ -63,10 +63,18 @@ SKIP_TESTS = ['test_exception_logging_origin',
               'test_download_parallel_fills_cache']
 
 # Run the tests!
-sys.exit(pytest.main(['astropy_tests',
-                      '-k ' + ' and '.join('not ' + test for test in SKIP_TESTS)],
-                     plugins=['pytest_doctestplus.plugin',
-                              'pytest_openfiles.plugin',
-                              'pytest_remotedata.plugin',
-                              'pytest_mpl.plugin',
-                              'pytest_astropy_header.display']))
+sys.exit(
+    pytest.main(
+        [
+            'astropy_tests',
+            '-k ' + ' and '.join(f'not {test}' for test in SKIP_TESTS),
+        ],
+        plugins=[
+            'pytest_doctestplus.plugin',
+            'pytest_openfiles.plugin',
+            'pytest_remotedata.plugin',
+            'pytest_mpl.plugin',
+            'pytest_astropy_header.display',
+        ],
+    )
+)
