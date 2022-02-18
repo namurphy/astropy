@@ -22,28 +22,23 @@ KERNELS = []
 for shape in SHAPES_ODD + NOSHAPE:
     for width in WIDTHS:
 
-        KERNELS.append(Gaussian2DKernel(width,
+        KERNELS.extend((Gaussian2DKernel(width,
                                         x_size=shape[0],
                                         y_size=shape[1],
                                         mode='oversample',
-                                        factor=10))
-
-        KERNELS.append(Box2DKernel(width,
+                                        factor=10), Box2DKernel(width,
                                    x_size=shape[0],
                                    y_size=shape[1],
                                    mode='oversample',
-                                   factor=10))
-
-        KERNELS.append(Tophat2DKernel(width,
+                                   factor=10), Tophat2DKernel(width,
                                       x_size=shape[0],
                                       y_size=shape[1],
                                       mode='oversample',
-                                      factor=10))
-        KERNELS.append(Moffat2DKernel(width, 2,
+                                      factor=10), Moffat2DKernel(width, 2,
                                       x_size=shape[0],
                                       y_size=shape[1],
                                       mode='oversample',
-                                      factor=10))
+                                      factor=10)))
 
 
 class Test2DConvolutions:
@@ -57,7 +52,7 @@ class Test2DConvolutions:
         shape = kernel.array.shape
 
         x = np.zeros(shape)
-        xslice = tuple([slice(sh // 2, sh // 2 + 1) for sh in shape])
+        xslice = tuple(slice(sh // 2, sh // 2 + 1) for sh in shape)
         x[xslice] = 1.0
 
         c2 = convolve_fft(x, kernel, boundary='fill')
@@ -96,7 +91,7 @@ class Test2DConvolutions:
         kernel = np.ones([width, width])
 
         x = np.zeros(shape)
-        xslice = tuple([slice(sh // 2, sh // 2 + 1) for sh in shape])
+        xslice = tuple(slice(sh // 2, sh // 2 + 1) for sh in shape)
         x[xslice] = 1.0
 
         c2 = convolve_fft(x, kernel, boundary='fill')
@@ -116,7 +111,7 @@ class Test2DConvolutions:
         kernel2 = Box2DKernel(width, mode='oversample', factor=10)
 
         x = np.zeros(shape)
-        xslice = tuple([slice(sh // 2, sh // 2 + 1) for sh in shape])
+        xslice = tuple(slice(sh // 2, sh // 2 + 1) for sh in shape)
         x[xslice] = 1.0
 
         c2 = convolve_fft(x, kernel2, boundary='fill')

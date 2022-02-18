@@ -177,7 +177,7 @@ def test_distance_broadcast():
 
     # Test some dark energy models
     methods = ['Om', 'Ode', 'w', 'de_density_scale']
-    for tcosmo in [core.LambdaCDM(H0=70, Om0=0.27, Ode0=0.5),
+    for _ in [core.LambdaCDM(H0=70, Om0=0.27, Ode0=0.5),
                    core.wCDM(H0=70, Om0=0.27, Ode0=0.5, w0=-1.2),
                    core.w0waCDM(H0=70, Om0=0.27, Ode0=0.5, w0=-1.2, wa=-0.2),
                    core.wpwaCDM(H0=70, Om0=0.27, Ode0=0.5,
@@ -246,7 +246,7 @@ def test_clone():
     newclone = cosmo.clone(name="New name", H0=65 * u.km / u.s / u.Mpc,
                            Tcmb0=2.8 * u.K)
     assert newclone.__class__ == cosmo.__class__
-    assert not newclone.name == cosmo.name
+    assert newclone.name != cosmo.name
     assert not allclose(newclone.H0.value, cosmo.H0.value)
     assert allclose(newclone.H0, 65.0 * u.km / u.s / u.Mpc)
     assert allclose(newclone.Om0, cosmo.Om0)

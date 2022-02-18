@@ -162,10 +162,9 @@ def discretize_model(model, x_range, y_range=None, mode='center', factor=10):
         raise ValueError("The difference between the upper and lower limit of"
                          " 'x_range' must be a whole number.")
 
-    if y_range:
-        if not float(np.diff(y_range)).is_integer():
-            raise ValueError("The difference between the upper and lower limit of"
-                             " 'y_range' must be a whole number.")
+    if y_range and not float(np.diff(y_range)).is_integer():
+        raise ValueError("The difference between the upper and lower limit of"
+                         " 'y_range' must be a whole number.")
 
     if ndim == 2 and y_range is None:
         raise ValueError("y range not specified, but model is 2-d")

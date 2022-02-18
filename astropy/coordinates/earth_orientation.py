@@ -250,8 +250,13 @@ def _load_nutation_data(datastr, seriestype):
     else:
         raise ValueError('requested invalid nutation series type')
 
-    lines = [l for l in datastr.split('\n')
-             if not l.startswith('#') if not l.strip() == '']
+    lines = [
+        l
+        for l in datastr.split('\n')
+        if not l.startswith('#')
+        if l.strip() != ''
+    ]
+
 
     lists = [[] for _ in dtypes]
     for l in lines:

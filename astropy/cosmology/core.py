@@ -360,9 +360,7 @@ class FLRW(Cosmology, metaclass=ABCMeta):
     @property
     def has_massive_nu(self):
         """ Does this cosmology have at least one massive neutrino species?"""
-        if self._Tnu0.value == 0:
-            return False
-        return self._massivenu
+        return False if self._Tnu0.value == 0 else self._massivenu
 
     @property
     def m_nu(self):
@@ -599,9 +597,8 @@ class FLRW(Cosmology, metaclass=ABCMeta):
             # Common enough case to be worth checking explicitly
             if self._Ok0 == 0:
                 return np.zeros(np.asanyarray(z).shape)
-        else:
-            if self._Ok0 == 0:
-                return 0.0
+        elif self._Ok0 == 0:
+            return 0.0
 
         return self._Ok0 * (1. + z) ** 2 * self.inv_efunc(z) ** 2
 
@@ -625,9 +622,8 @@ class FLRW(Cosmology, metaclass=ABCMeta):
             # Common case worth checking
             if self._Ode0 == 0:
                 return np.zeros(np.asanyarray(z).shape)
-        else:
-            if self._Ode0 == 0:
-                return 0.0
+        elif self._Ode0 == 0:
+            return 0.0
 
         return self._Ode0 * self.de_density_scale(z) * self.inv_efunc(z) ** 2
 
@@ -672,9 +668,8 @@ class FLRW(Cosmology, metaclass=ABCMeta):
             z = np.asarray(z)
             if self._Onu0 == 0:
                 return np.zeros(np.asanyarray(z).shape)
-        else:
-            if self._Onu0 == 0:
-                return 0.0
+        elif self._Onu0 == 0:
+            return 0.0
 
         return self.Ogamma(z) * self.nu_relative_density(z)
 
@@ -944,11 +939,7 @@ class FLRW(Cosmology, metaclass=ABCMeta):
         Eqn 30 from Hogg 1999.
         """
 
-        if isiterable(z):
-            zp1 = 1.0 + np.asarray(z)
-        else:
-            zp1 = 1. + z
-
+        zp1 = 1.0 + np.asarray(z) if isiterable(z) else 1. + z
         return self.inv_efunc(z) / zp1
 
     def _abs_distance_integrand_scalar(self, z):
@@ -990,10 +981,7 @@ class FLRW(Cosmology, metaclass=ABCMeta):
         See Hogg 1999 section 11.
         """
 
-        if isiterable(z):
-            zp1 = 1.0 + np.asarray(z)
-        else:
-            zp1 = 1. + z
+        zp1 = 1.0 + np.asarray(z) if isiterable(z) else 1. + z
         return zp1 ** 2 * self.inv_efunc(z)
 
     def H(self, z):
@@ -1710,10 +1698,7 @@ class LambdaCDM(FLRW):
         :math:`w(z) = -1`.
         """
 
-        if np.isscalar(z):
-            return -1.0
-        else:
-            return -1.0 * np.ones(np.asanyarray(z).shape)
+        return -1.0 if np.isscalar(z) else -1.0 * np.ones(np.asanyarray(z).shape)
 
     def de_density_scale(self, z):
         """ Evaluates the redshift dependence of the dark energy density.
@@ -1734,10 +1719,7 @@ class LambdaCDM(FLRW):
         and in this case is given by :math:`I = 1`.
         """
 
-        if np.isscalar(z):
-            return 1.
-        else:
-            return np.ones(np.asanyarray(z).shape)
+        return 1. if np.isscalar(z) else np.ones(np.asanyarray(z).shape)
 
     def _elliptic_comoving_distance_z1z2(self, z1, z2):
         """ Comoving transverse distance in Mpc between two redshifts.
@@ -3254,10 +3236,7 @@ def _float_or_none(x, digits=3):
 
 def vectorize_if_needed(func, *x):
     """ Helper function to vectorize functions on array inputs"""
-    if any(map(isiterable, x)):
-        return np.vectorize(func)(*x)
-    else:
-        return func(*x)
+    return np.vectorize(func)(*x) if any(map(isiterable, x)) else func(*x)
 
 
 def inf_like(x):
@@ -3275,10 +3254,7 @@ def inf_like(x):
     >>> inf_like([0, 1, 2, 3])  # integer list should give float output
     array([inf, inf, inf, inf])
     """
-    if np.isscalar(x):
-        return np.inf
-    else:
-        return np.full_like(x, np.inf, dtype='float')
+    return np.inf if np.isscalar(x) else np.full_like(x, np.inf, dtype='float')
 
 
 # Pre-defined cosmologies. This loops over the parameter sets in the
@@ -3296,14 +3272,13 @@ for key in parameters.available:
                               name=key,
                               Ob0=par['Ob0'])
         docstr = "{} instance of FlatLambdaCDM cosmology\n\n(from {})"
-        cosmo.__doc__ = docstr.format(key, par['reference'])
     else:
         cosmo = LambdaCDM(par['H0'], par['Om0'], par['Ode0'],
                           Tcmb0=par['Tcmb0'], Neff=par['Neff'],
                           m_nu=u.Quantity(par['m_nu'], u.eV), name=key,
                           Ob0=par['Ob0'])
         docstr = "{} instance of LambdaCDM cosmology\n\n(from {})"
-        cosmo.__doc__ = docstr.format(key, par['reference'])
+    cosmo.__doc__ = docstr.format(key, par['reference'])
     setattr(sys.modules[__name__], key, cosmo)
 
 # don't leave these variables floating around in the namespace

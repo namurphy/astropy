@@ -78,10 +78,7 @@ class SpectralQuantity(SpecificTypeQuantity):
         # choose to return a SpectralQuantity - even if the units match, we
         # want to avoid doing things like adding two SpectralQuantity instances
         # together and getting a SpectralQuantity back
-        if unit is self.unit:
-            return SpectralQuantity, True
-        else:
-            return Quantity, False
+        return (SpectralQuantity, True) if unit is self.unit else (Quantity, False)
 
     def __array_ufunc__(self, function, method, *inputs, **kwargs):
         # We always return Quantity except in a few specific cases
@@ -93,13 +90,15 @@ class SpectralQuantity(SpecificTypeQuantity):
                 and method in ('reduce', 'reduceat'))):
             result = result.view(self.__class__)
             result.__array_finalize__(self)
+        elif result is self:
+            raise TypeError(f"Cannot store the result of this operation in {self.__class__.__name__}")
         else:
-            if result is self:
-                raise TypeError(f"Cannot store the result of this operation in {self.__class__.__name__}")
-            if result.dtype.kind == 'b':
-                result = result.view(np.ndarray)
-            else:
-                result = result.view(Quantity)
+            result = (
+                result.view(np.ndarray)
+                if result.dtype.kind == 'b'
+                else result.view(Quantity)
+            )
+
         return result
 
     @property

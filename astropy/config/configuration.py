@@ -298,9 +298,7 @@ class ConfigItem:
         return self.set(value)
 
     def __get__(self, obj, objtype=None):
-        if obj is None:
-            return self
-        return self()
+        return self if obj is None else self()
 
     def set(self, value):
         """
@@ -386,9 +384,8 @@ class ConfigItem:
         return baseobj.get(self.name)
 
     def __repr__(self):
-        out = '<{}: name={!r} value={!r} at 0x{:x}>'.format(
+        return '<{}: name={!r} value={!r} at 0x{:x}>'.format(
             self.__class__.__name__, self.name, self(), id(self))
-        return out
 
     def __str__(self):
         out = '\n'.join(('{0}: {1}',
@@ -417,10 +414,7 @@ class ConfigItem:
             If the configuration value as stored is not this item's type.
         """
         def section_name(section):
-            if section == '':
-                return 'at the top-level'
-            else:
-                return f'in section [{section}]'
+            return 'at the top-level' if section == '' else f'in section [{section}]'
 
         options = []
         sec = get_config(self.module, rootname=self.rootname)
@@ -558,11 +552,7 @@ def get_config(packageormod=None, reload=False, rootname=None):
     secname = '.'.join(packageormodspl[1:])
 
     if rootname is None:
-        if _autopkg:
-            rootname = pkgname
-        else:
-            rootname = 'astropy'  # so we don't break affiliated packages
-
+        rootname = pkgname if _autopkg else 'astropy'
     cobj = _cfgobjs.get(pkgname, None)
 
     if cobj is None or reload:
@@ -576,7 +566,7 @@ def get_config(packageormod=None, reload=False, rootname=None):
             cobj = configobj.ConfigObj(cfgfn, interpolation=False)
         except OSError as e:
             msg = ('Configuration defaults will be used due to ')
-            errstr = '' if len(e.args) < 1 else (':' + str(e.args[0]))
+            errstr = '' if len(e.args) < 1 else f':{str(e.args[0])}'
             msg += e.__class__.__name__ + errstr
             msg += f' on {cfgfn}'
             warn(ConfigurationMissingWarning(msg))
@@ -587,12 +577,11 @@ def get_config(packageormod=None, reload=False, rootname=None):
 
         _cfgobjs[pkgname] = cobj
 
-    if secname:  # not the root package
-        if secname not in cobj:
-            cobj[secname] = {}
-        return cobj[secname]
-    else:
+    if not secname:
         return cobj
+    if secname not in cobj:
+        cobj[secname] = {}
+    return cobj[secname]
 
 
 def generate_config(pkgname='astropy', filename=None, verbose=False):
@@ -619,8 +608,7 @@ def generate_config(pkgname='astropy', filename=None, verbose=False):
     package = importlib.import_module(pkgname)
     with verbosity(), warnings.catch_warnings():
         warnings.simplefilter('ignore', category=filter_warnings)
-        for mod in pkgutil.walk_packages(path=package.__path__,
-                                         prefix=package.__name__ + '.'):
+        for mod in pkgutil.walk_packages(path=package.__path__, prefix=f'{package.__name__}.'):
 
             if (mod.module_finder.path.endswith(('test', 'tests')) or
                     mod.name.endswith('setup_package')):
@@ -788,7 +776,7 @@ def update_default_config(pkg, default_cfg_dir_or_fn, version=None, rootname='as
     """
 
     if path.isdir(default_cfg_dir_or_fn):
-        default_cfgfn = path.join(default_cfg_dir_or_fn, pkg + '.cfg')
+        default_cfgfn = path.join(default_cfg_dir_or_fn, f'{pkg}.cfg')
     else:
         default_cfgfn = default_cfg_dir_or_fn
 
@@ -830,25 +818,24 @@ def update_default_config(pkg, default_cfg_dir_or_fn, version=None, rootname='as
     else:
         needs_template = False
 
-    if doupdate or needs_template:
-        if needs_template:
-            with open(template_path, 'wt', encoding='latin-1') as fw:
-                fw.write(template_content)
-            # If we just installed a new template file and we can't
-            # update the main configuration file because it has user
-            # changes, display a warning.
-            if not identical and not doupdate:
-                warn(
-                    "The configuration options in {} {} may have changed, "
-                    "your configuration file was not updated in order to "
-                    "preserve local changes.  A new configuration template "
-                    "has been saved to '{}'.".format(
-                        pkg, version, template_path),
-                    ConfigurationChangedWarning)
+    if needs_template:
+        with open(template_path, 'wt', encoding='latin-1') as fw:
+            fw.write(template_content)
+        # If we just installed a new template file and we can't
+        # update the main configuration file because it has user
+        # changes, display a warning.
+        if not identical and not doupdate:
+            warn(
+                "The configuration options in {} {} may have changed, "
+                "your configuration file was not updated in order to "
+                "preserve local changes.  A new configuration template "
+                "has been saved to '{}'.".format(
+                    pkg, version, template_path),
+                ConfigurationChangedWarning)
 
-        if doupdate and not identical:
-            with open(cfgfn, 'wt', encoding='latin-1') as fw:
-                fw.write(template_content)
-            return True
+    if doupdate and not identical:
+        with open(cfgfn, 'wt', encoding='latin-1') as fw:
+            fw.write(template_content)
+        return True
 
     return False

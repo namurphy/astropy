@@ -97,7 +97,7 @@ class Attribute:
         if instance is None:
             out = self.default
         else:
-            out = getattr(instance, '_' + self.name, self.default)
+            out = getattr(instance, f'_{self.name}', self.default)
             if out is None:
                 out = getattr(instance, self.secondary_attribute, self.default)
 
@@ -123,7 +123,7 @@ class Attribute:
                 converted = True
 
             if converted:
-                setattr(instance, '_' + self.name, out)
+                setattr(instance, f'_{self.name}', out)
 
         return out
 
@@ -236,24 +236,23 @@ class CartesianRepresentationAttribute(Attribute):
         if (isinstance(value, list) and len(value) == 3 and
                 all(v == 0 for v in value) and self.unit is not None):
             return CartesianRepresentation(np.zeros(3) * self.unit), True
-        else:
-            # is it a CartesianRepresentation with correct unit?
-            if hasattr(value, 'xyz') and value.xyz.unit == self.unit:
-                return value, False
+        # is it a CartesianRepresentation with correct unit?
+        if hasattr(value, 'xyz') and value.xyz.unit == self.unit:
+            return value, False
 
-            converted = True
-            # if it's a CartesianRepresentation, get the xyz Quantity
-            value = getattr(value, 'xyz', value)
-            if not hasattr(value, 'unit'):
-                raise TypeError('tried to set a {} with something that does '
-                                'not have a unit.'
-                                .format(self.__class__.__name__))
+        converted = True
+        # if it's a CartesianRepresentation, get the xyz Quantity
+        value = getattr(value, 'xyz', value)
+        if not hasattr(value, 'unit'):
+            raise TypeError('tried to set a {} with something that does '
+                            'not have a unit.'
+                            .format(self.__class__.__name__))
 
-            value = value.to(self.unit)
+        value = value.to(self.unit)
 
-            # now try and make a CartesianRepresentation.
-            cartrep = CartesianRepresentation(value, copy=False)
-            return cartrep, converted
+        # now try and make a CartesianRepresentation.
+        cartrep = CartesianRepresentation(value, copy=False)
+        return cartrep, converted
 
 
 class QuantityAttribute(Attribute):

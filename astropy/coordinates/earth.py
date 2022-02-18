@@ -370,10 +370,9 @@ class EarthLocation(u.Quantity):
 
         if cls is el.__class__:
             return el
-        else:
-            newel = cls.from_geodetic(*el.to_geodetic())
-            newel.info.name = el.info.name
-            return newel
+        newel = cls.from_geodetic(*el.to_geodetic())
+        newel.info.name = el.info.name
+        return newel
 
     @classmethod
     def of_address(cls, address, get_height=False, google_api_key=None):

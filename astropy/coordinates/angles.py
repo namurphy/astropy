@@ -351,7 +351,7 @@ class Angle(u.SpecificTypeQuantity):
         def do_format(val):
             s = func(float(val))
             if alwayssign and not s.startswith('-'):
-                s = '+' + s
+                s = f'+{s}'
             if format == 'latex':
                 s = f'${s}$'
             return s

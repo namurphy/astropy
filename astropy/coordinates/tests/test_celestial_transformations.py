@@ -27,9 +27,11 @@ dist_precision = 1e-9 * u.kpc
 
 m31_params = []
 for i in range(len(m31_sys)):
-    for j in range(len(m31_sys)):
-        if i < j:
-            m31_params.append((m31_sys[i], m31_sys[j], m31_coo[i], m31_coo[j]))
+    m31_params.extend(
+        (m31_sys[i], m31_sys[j], m31_coo[i], m31_coo[j])
+        for j in range(len(m31_sys))
+        if i < j
+    )
 
 
 @pytest.mark.parametrize(('fromsys', 'tosys', 'fromcoo', 'tocoo'), m31_params)

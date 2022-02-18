@@ -127,7 +127,7 @@ def getObj(s):
     global compiler
     if compiler is None:
         import compiler
-    s = "a=" + s
+    s = f'a={s}'
     p = compiler.parse(s)
     return p.getChildren()[1].getChildren()[0].getChildren()[1]
 
@@ -150,11 +150,8 @@ class Builder(object):
         return o.value
 
     def build_Dict(self, o):
-        d = {}
         i = iter(map(self.build, o.getChildren()))
-        for el in i:
-            d[el] = next(i)
-        return d
+        return {el: next(i) for el in i}
 
     def build_Tuple(self, o):
         return tuple(self.build_List(o))
@@ -326,12 +323,7 @@ class InterpolationEngine(object):
                 # The actual parsing of the match is implementation-dependent,
                 # so delegate to our helper function
                 k, v, s = self._parse_match(match)
-                if k is None:
-                    # That's the signal that no further interpolation is needed
-                    replacement = v
-                else:
-                    # Further interpolation may be needed to obtain final value
-                    replacement = recursive_interpolate(k, v, s, backtrail)
+                replacement = v if k is None else recursive_interpolate(k, v, s, backtrail)
                 # Replace the matched string with its final value
                 start, end = match.span()
                 value = ''.join((value[:start], replacement, value[end:]))
@@ -555,9 +547,7 @@ class Section(dict):
                 return self._interpolate(key, val)
             if isinstance(val, list):
                 def _check(entry):
-                    if isinstance(entry, str):
-                        return self._interpolate(key, entry)
-                    return entry
+                    return self._interpolate(key, entry) if isinstance(entry, str) else entry
                 new = [_check(entry) for entry in val]
                 if new != val:
                     return new
@@ -896,9 +886,8 @@ class Section(dict):
             except Exception:
                 if raise_errors:
                     raise
-                else:
-                    entry = self.scalars[i]
-                    out[entry] = False
+                entry = self.scalars[i]
+                out[entry] = False
         # then sections
         for i in range(len(self.sections)):
             entry = self.sections[i]
@@ -908,9 +897,8 @@ class Section(dict):
                 except Exception:
                     if raise_errors:
                         raise
-                    else:
-                        entry = self.sections[i]
-                        out[entry] = False
+                    entry = self.sections[i]
+                    out[entry] = False
                 # bound again in case name has changed
                 entry = self.sections[i]
             # previous result is discarded
@@ -1396,11 +1384,7 @@ class ConfigObj(Section):
             # just decode
             return self._decode(infile, self.encoding)
 
-        if isinstance(infile, (list, tuple)):
-            line = infile[0]
-        else:
-            line = infile
-
+        line = infile[0] if isinstance(infile, (list, tuple)) else infile
         if isinstance(line, str):
             # it's already decoded and there's no need to do anything
             # else, just use the _decode utility method to handle
@@ -1449,27 +1433,26 @@ class ConfigObj(Section):
             if not isinstance(line, bytes) or not line.startswith(BOM):
                 # didn't specify a BOM, or it's not a bytestring
                 continue
-            else:
-                # BOM discovered
-                self.encoding = final_encoding
-                if not final_encoding:
-                    self.BOM = True
-                    # UTF8
-                    # remove BOM
-                    newline = line[len(BOM):]
-                    if isinstance(infile, (list, tuple)):
-                        infile[0] = newline
-                    else:
-                        infile = newline
-                    # UTF-8
-                    if isinstance(infile, str):
-                        return infile.splitlines(True)
-                    elif isinstance(infile, bytes):
-                        return infile.decode('utf-8').splitlines(True)
-                    else:
-                        return self._decode(infile, 'utf-8')
-                # UTF16 - have to decode
-                return self._decode(infile, encoding)
+            # BOM discovered
+            self.encoding = final_encoding
+            if not final_encoding:
+                self.BOM = True
+                # UTF8
+                # remove BOM
+                newline = line[len(BOM):]
+                if isinstance(infile, (list, tuple)):
+                    infile[0] = newline
+                else:
+                    infile = newline
+                # UTF-8
+                if isinstance(infile, str):
+                    return infile.splitlines(True)
+                elif isinstance(infile, bytes):
+                    return infile.decode('utf-8').splitlines(True)
+                else:
+                    return self._decode(infile, 'utf-8')
+            # UTF16 - have to decode
+            return self._decode(infile, encoding)
 
         # No BOM discovered and no encoding specified, default to UTF-8
         if isinstance(infile, bytes):
@@ -1525,12 +1508,7 @@ class ConfigObj(Section):
         Used by ``stringify`` within validate, to turn non-string values
         into strings.
         """
-        if not isinstance(value, str):
-            # intentially 'str' because it's just whatever the "normal"
-            # string type is for the python version we're dealing with
-            return str(value)
-        else:
-            return value
+        return str(value) if not isinstance(value, str) else value
 
 
     def _parse(self, infile):

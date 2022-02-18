@@ -74,14 +74,10 @@ def _get_frame_without_data(args, kwargs):
     """
     from .sky_coordinate import SkyCoord
 
-    # We eventually (hopefully) fill and return these by extracting the frame
-    # and frame attributes from the input:
-    frame_cls = None
-    frame_cls_kwargs = {}
-
     # The first place to check: the frame could be specified explicitly
     frame = kwargs.pop('frame', None)
 
+    frame_cls = None
     if frame is not None:
         # Here the frame was explicitly passed in as a keyword argument.
 
@@ -193,9 +189,11 @@ def _get_frame_without_data(args, kwargs):
         # We should hopefully never get here...
         raise ValueError(f'Frame class has unexpected type: {frame_cls.__name__}')
 
-    for attr in frame_cls.frame_attributes:
-        if attr in kwargs:
-            frame_cls_kwargs[attr] = kwargs.pop(attr)
+    frame_cls_kwargs = {
+        attr: kwargs.pop(attr)
+        for attr in frame_cls.frame_attributes
+        if attr in kwargs
+    }
 
     # TODO: remove this in a future LTS release
     _normalize_representation_type(kwargs)
@@ -221,16 +219,17 @@ def _parse_coordinate_data(frame, args, kwargs):
     are (1) extra SkyCoord attributes, and (2) the coordinate data, specified in
     any of the valid ways.
     """
-    valid_skycoord_kwargs = {}
     valid_components = {}
     info = None
 
     # Look through the remaining kwargs to see if any are valid attribute names
     # by asking the frame transform graph:
     attr_names = list(kwargs.keys())
-    for attr in attr_names:
-        if attr in frame_transform_graph.frame_attributes:
-            valid_skycoord_kwargs[attr] = kwargs.pop(attr)
+    valid_skycoord_kwargs = {
+        attr: kwargs.pop(attr)
+        for attr in attr_names
+        if attr in frame_transform_graph.frame_attributes
+    }
 
     # By this point in parsing the arguments, anything left in the args and
     # kwargs should be data. Either as individual components, or a list of
@@ -350,7 +349,7 @@ def _get_representation_component_units(args, kwargs):
 
         try:
             units = [(Unit(x) if x else None) for x in units]
-            units.extend(None for x in range(3 - len(units)))
+            units.extend(None for _ in range(3 - len(units)))
             if len(units) > 3:
                 raise ValueError()
         except Exception:
@@ -463,11 +462,6 @@ def _parse_coordinate_arg(coords, frame, units, init_kwargs):
         values = coords.transpose()  # Iterates over repr attrs
 
     elif isinstance(coords, (Sequence, np.ndarray)):
-        # Handles list-like input.
-
-        vals = []
-        is_ra_dec_representation = ('ra' in frame.representation_component_names and
-                                    'dec' in frame.representation_component_names)
         coord_types = (SkyCoord, BaseCoordinateFrame, BaseRepresentation)
         if any(isinstance(coord, coord_types) for coord in coords):
             # this parsing path is used when there are coordinate-like objects
@@ -509,6 +503,11 @@ def _parse_coordinate_arg(coords, frame, units, init_kwargs):
                     concat_vals._unit = data_val.unit
                 values.append(concat_vals)
         else:
+            # Handles list-like input.
+
+            vals = []
+            is_ra_dec_representation = ('ra' in frame.representation_component_names and
+                                        'dec' in frame.representation_component_names)
             # none of the elements are "frame-like"
             # turn into a list of lists like [[v1_0, v2_0, v3_0], ... [v1_N, v2_N, v3_N]]
             for coord in coords:
@@ -525,7 +524,7 @@ def _parse_coordinate_arg(coords, frame, units, init_kwargs):
             # Do some basic validation of the list elements: all have a length and all
             # lengths the same
             try:
-                n_coords = sorted(set(len(x) for x in vals))
+                n_coords = sorted({len(x) for x in vals})
             except Exception:
                 raise ValueError('One or more elements of input sequence does not have a length')
 
@@ -642,24 +641,37 @@ def _parse_ra_dec(coord_str):
         # This exception should never be raised from SkyCoord
         raise TypeError('coord_str must be a single str')
 
-    if len(coord1) == 6:
-        coord = (' '.join(coord1[:3]), ' '.join(coord1[3:]))
-    elif len(coord1) > 2:
+    if (
+        len(coord1) != 6
+        and len(coord1) <= 2
+        and len(coord1) == 1
+        and (match_j := J_PREFIXED_RA_DEC_RE.match(coord_str))
+    ):
+        coord = match_j.groups()
+        if len(coord[0].split('.')[0]) == 7:
+            coord = (
+                f'{coord[0][:3]} {coord[0][3:5]} {coord[0][5:]}',
+                f'{coord[1][:3]} {coord[1][3:5]} {coord[1][5:]}',
+            )
+
+        else:
+            coord = (
+                f'{coord[0][:2]} {coord[0][2:4]} {coord[0][4:]}',
+                f'{coord[1][:3]} {coord[1][3:5]} {coord[1][5:]}',
+            )
+
+    elif (
+        len(coord1) != 6
+        and len(coord1) <= 2
+        and len(coord1) == 1
+        and not (match_j := J_PREFIXED_RA_DEC_RE.match(coord_str))
+        or len(coord1) != 6
+        and len(coord1) > 2
+    ):
         coord = PLUS_MINUS_RE.split(coord_str)
         coord = (coord[0], ' '.join(coord[1:]))
-    elif len(coord1) == 1:
-        match_j = J_PREFIXED_RA_DEC_RE.match(coord_str)
-        if match_j:
-            coord = match_j.groups()
-            if len(coord[0].split('.')[0]) == 7:
-                coord = (f'{coord[0][0:3]} {coord[0][3:5]} {coord[0][5:]}',
-                         f'{coord[1][0:3]} {coord[1][3:5]} {coord[1][5:]}')
-            else:
-                coord = (f'{coord[0][0:2]} {coord[0][2:4]} {coord[0][4:]}',
-                         f'{coord[1][0:3]} {coord[1][3:5]} {coord[1][5:]}')
-        else:
-            coord = PLUS_MINUS_RE.split(coord_str)
-            coord = (coord[0], ' '.join(coord[1:]))
+    elif len(coord1) == 6:
+        coord = (' '.join(coord1[:3]), ' '.join(coord1[3:]))
     else:
         coord = coord1
 

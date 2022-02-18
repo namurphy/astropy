@@ -897,8 +897,8 @@ def test_equal():
     ne = sc1 != sc2
     assert np.all(eq == [True, False])
     assert np.all(ne == [False, True])
-    assert (sc1[0] == sc2[0]) == True  # noqa  (numpy True not Python True)
-    assert (sc1[0] != sc2[0]) == False  # noqa
+    assert sc1[0] == sc2[0]
+    assert sc1[0] == sc2[0]
 
     # Broadcasting
     eq = sc1[0] == sc2
@@ -914,11 +914,11 @@ def test_equal():
     ne = sc1 != sc2
     assert np.all(eq == [True, False])
     assert np.all(ne == [False, True])
-    assert (sc1[0] == sc2[0]) == True  # noqa
-    assert (sc1[0] != sc2[0]) == False  # noqa
+    assert sc1[0] == sc2[0]
+    assert sc1[0] == sc2[0]
 
-    assert (FK4() == ICRS()) is False
-    assert (FK4() == FK4(obstime='J1999')) is False
+    assert FK4() != ICRS()
+    assert FK4() != FK4(obstime='J1999')
 
 
 def test_equal_exceptions():

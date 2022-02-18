@@ -171,7 +171,7 @@ def horoscope(birthday, corrected=True, chinese=False):
     for block in textwrap.wrap(desc, 79):
         split_block = block.split()
         for i, word in enumerate(split_block):
-            for re_word in special_words.keys():
+            for re_word in special_words:
                 match = re.search(re_word, word)
                 if match is None:
                     continue

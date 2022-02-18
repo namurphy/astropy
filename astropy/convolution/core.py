@@ -175,10 +175,7 @@ class Kernel:
         """
         Wrapper for multiplication with numpy arrays.
         """
-        if type(context[0]) == np.ufunc:
-            return NotImplemented
-        else:
-            return array
+        return NotImplemented if type(context[0]) == np.ufunc else array
 
 
 class Kernel1D(Kernel):
@@ -233,8 +230,7 @@ class Kernel1D(Kernel):
 
             array = discretize_model(self._model, x_range, **kwargs)
 
-        # Initialize from array
-        elif array is not None:
+        else:
             self._model = None
 
         super().__init__(array)
@@ -305,8 +301,7 @@ class Kernel2D(Kernel):
 
             array = discretize_model(self._model, x_range, y_range, **kwargs)
 
-        # Initialize from array
-        elif array is not None:
+        else:
             self._model = None
 
         super().__init__(array)
@@ -344,7 +339,6 @@ def kernel_arithmetics(kernel, value, operation):
         new_kernel._separable = kernel._separable and value._separable
         new_kernel._is_bool = kernel._is_bool or value._is_bool
 
-    # 2D kernels
     elif isinstance(kernel, Kernel2D) and isinstance(value, Kernel2D):
         if operation == "add":
             new_array = add_kernel_arrays_2D(kernel.array, value.array)
@@ -357,9 +351,7 @@ def kernel_arithmetics(kernel, value, operation):
         new_kernel._separable = kernel._separable and value._separable
         new_kernel._is_bool = kernel._is_bool or value._is_bool
 
-    # kernel and number
-    elif ((isinstance(kernel, Kernel1D) or isinstance(kernel, Kernel2D))
-        and np.isscalar(value)):
+    elif isinstance(kernel, (Kernel1D, Kernel2D)) and np.isscalar(value):
         if operation == "mul":
             new_kernel = copy.copy(kernel)
             new_kernel._array *= value

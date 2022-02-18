@@ -69,7 +69,7 @@ class _AngleParser:
         # We filter out degree and hourangle, since those are treated
         # separately.
         for unit in simple_units:
-            if unit != u.deg and unit != u.hourangle:
+            if unit not in [u.deg, u.hourangle]:
                 simple_unit_names.update(unit.names)
         return sorted(simple_unit_names)
 
@@ -112,10 +112,7 @@ class _AngleParser:
             # The above include Unicode "MINUS SIGN" \u2212.  It is
             # important to include the hyphen last, or the regex will
             # treat this as a range.
-            if t.value == '+':
-                t.value = 1.0
-            else:
-                t.value = -1.0
+            t.value = 1.0 if t.value == '+' else -1.0
             return t
 
         def t_EASTWEST(t):
@@ -173,20 +170,14 @@ class _AngleParser:
             sign : SIGN
                  |
             '''
-            if len(p) == 2:
-                p[0] = p[1]
-            else:
-                p[0] = 1.0
+            p[0] = p[1] if len(p) == 2 else 1.0
 
         def p_eastwest(p):
             '''
             eastwest : EASTWEST
                      |
             '''
-            if len(p) == 2:
-                p[0] = p[1]
-            else:
-                p[0] = 1.0
+            p[0] = p[1] if len(p) == 2 else 1.0
 
         def p_dir(p):
             '''
@@ -194,10 +185,7 @@ class _AngleParser:
                 | NORTHSOUTH
                 |
             '''
-            if len(p) == 2:
-                p[0] = p[1]
-            else:
-                p[0] = 1.0
+            p[0] = p[1] if len(p) == 2 else 1.0
 
         def p_ufloat(p):
             '''
@@ -246,9 +234,9 @@ class _AngleParser:
             '''
             if len(p) == 3:
                 p[0] = (p[1], u.hourangle)
-            elif len(p) in (4, 5):
+            elif len(p) in {4, 5}:
                 p[0] = ((p[1], p[3]), u.hourangle)
-            elif len(p) in (6, 7):
+            elif len(p) in {6, 7}:
                 p[0] = ((p[1], p[3], p[5]), u.hourangle)
 
         def p_dms(p):
@@ -263,9 +251,9 @@ class _AngleParser:
             '''
             if len(p) == 3:
                 p[0] = (p[1], u.degree)
-            elif len(p) in (4, 5):
+            elif len(p) in {4, 5}:
                 p[0] = ((p[1], p[3]), u.degree)
-            elif len(p) in (6, 7):
+            elif len(p) in {6, 7}:
                 p[0] = ((p[1], p[3], p[5]), u.degree)
 
         def p_simple(p):
@@ -273,10 +261,7 @@ class _AngleParser:
             simple : generic
                    | generic SIMPLE_UNIT
             '''
-            if len(p) == 2:
-                p[0] = (p[1], None)
-            else:
-                p[0] = (p[1], p[2])
+            p[0] = (p[1], None) if len(p) == 2 else (p[1], p[2])
 
         def p_arcsecond(p):
             '''
@@ -569,10 +554,7 @@ def sexagesimal_to_string(values, precision=None, pad=False, sep=(':',),
     values = [np.abs(value) for value in values]
 
     if pad:
-        if sign == -1:
-            pad = 3
-        else:
-            pad = 2
+        pad = 3 if sign == -1 else 2
     else:
         pad = 0
 
@@ -619,9 +601,8 @@ def sexagesimal_to_string(values, precision=None, pad=False, sep=(':',),
     elif fields < 2 and values[1] >= 30.0:
         values[0] += 1.0
 
-    literal = []
     last_value = ''
-    literal.append('{0:0{pad}.0f}{sep[0]}')
+    literal = ['{0:0{pad}.0f}{sep[0]}']
     if fields >= 2:
         literal.append('{1:02d}{sep[1]}')
     if fields == 3:
@@ -632,7 +613,7 @@ def sexagesimal_to_string(values, precision=None, pad=False, sep=(':',),
             last_value = '{0:.{precision}f}'.format(
                 abs(values[2]), precision=precision)
         if len(last_value) == 1 or last_value[1] == '.':
-            last_value = '0' + last_value
+            last_value = f'0{last_value}'
         literal.append('{last_value}{sep[2]}')
     literal = ''.join(literal)
     return literal.format(np.copysign(values[0], sign),

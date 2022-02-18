@@ -335,12 +335,12 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
 
             if fnm in kwargs:
                 value = kwargs.pop(fnm)
-                setattr(self, '_' + fnm, value)
+                setattr(self, f'_{fnm}', value)
                 # Validate attribute by getting it. If the instance has data,
                 # this also checks its shape is OK. If not, we do it below.
                 values[fnm] = getattr(self, fnm)
             else:
-                setattr(self, '_' + fnm, fdefault)
+                setattr(self, f'_{fnm}', fdefault)
                 self._attr_names_with_defaults.append(fnm)
 
         if kwargs:
@@ -351,12 +351,11 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
         # We do ``is None`` because self._data might evaluate to false for
         # empty arrays or data == 0
         if self._data is None:
-            # No data: we still need to check that any non-scalar attributes
-            # have consistent shapes. Collect them for all attributes with
-            # size > 1 (which should be array-like and thus have a shape).
-            shapes = {fnm: value.shape for fnm, value in values.items()
-                      if getattr(value, 'shape', ())}
-            if shapes:
+            if shapes := {
+                fnm: value.shape
+                for fnm, value in values.items()
+                if getattr(value, 'shape', ())
+            }:
                 if len(shapes) > 1:
                     try:
                         self._no_data_shape = check_broadcast(*shapes.values())
@@ -424,10 +423,11 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
         differential_data = None
 
         args = list(args)  # need to be able to pop them
-        if (len(args) > 0) and (isinstance(args[0], r.BaseRepresentation) or
-                                args[0] is None):
+        if args and (
+            (isinstance(args[0], r.BaseRepresentation) or args[0] is None)
+        ):
             representation_data = args.pop(0)  # This can still be None
-            if len(args) > 0:
+            if args:
                 raise TypeError(
                     'Cannot create a frame with both a representation object '
                     'and other positional arguments')
@@ -449,7 +449,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
             # using keyword or positional arguments for the component names
             repr_kwargs = {}
             for nmkw, nmrep in self.representation_component_names.items():
-                if len(args) > 0:
+                if args:
                     # first gather up positional args
                     repr_kwargs[nmrep] = args.pop(0)
                 elif nmkw in kwargs:
@@ -499,7 +499,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
             diff_component_names = self.get_representation_component_names('s')
             diff_kwargs = {}
             for nmkw, nmrep in diff_component_names.items():
-                if len(args) > 0:
+                if args:
                     # first gather up positional args
                     diff_kwargs[nmrep] = args.pop(0)
                 elif nmkw in kwargs:
@@ -530,7 +530,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
                     e.args = (msg,)
                     raise
 
-        if len(args) > 0:
+        if args:
             raise TypeError(
                 '{}.__init__ had {} remaining unhandled arguments'.format(
                     self.__class__.__name__, len(args)))
@@ -1098,8 +1098,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
             # set of names and units, then use that.
             new_attrs = self.representation_info.get(representation_cls)
             if new_attrs and in_frame_units:
-                datakwargs = dict((comp, getattr(data, comp))
-                                  for comp in data.components)
+                datakwargs = {comp: getattr(data, comp) for comp in data.components}
                 for comp, new_attr_unit in zip(data.components, new_attrs['units']):
                     if new_attr_unit:
                         datakwargs[comp] = datakwargs[comp].to(new_attr_unit)
@@ -1113,8 +1112,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
                 # defined set of names and units, then use that.
                 new_attrs = self.representation_info.get(differential_cls)
                 if new_attrs and in_frame_units:
-                    diffkwargs = dict((comp, getattr(diff, comp))
-                                      for comp in diff.components)
+                    diffkwargs = {comp: getattr(diff, comp) for comp in diff.components}
                     for comp, new_attr_unit in zip(diff.components,
                                                    new_attrs['units']):
                         # Some special-casing to treat a situation where the
@@ -1257,10 +1255,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
         trans = frame_transform_graph.get_transform(self.__class__, new_frame_cls)
 
         if trans is None:
-            if new_frame_cls is self.__class__:
-                return 'same'
-            else:
-                return False
+            return 'same' if new_frame_cls is self.__class__ else False
         else:
             return True
 
@@ -1368,11 +1363,13 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
             If ``other`` isn't a `BaseCoordinateFrame` or subclass.
         """
         if self.__class__ == other.__class__:
-            for frame_attr_name in self.get_frame_attr_names():
-                if not self._frameattr_equiv(getattr(self, frame_attr_name),
-                                             getattr(other, frame_attr_name)):
-                    return False
-            return True
+            return all(
+                self._frameattr_equiv(
+                    getattr(self, frame_attr_name), getattr(other, frame_attr_name)
+                )
+                for frame_attr_name in self.get_frame_attr_names()
+            )
+
         elif not isinstance(other, BaseCoordinateFrame):
             raise TypeError("Tried to do is_equivalent_frame on something that "
                             "isn't a frame")
@@ -1430,13 +1427,13 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
                 for i, name in enumerate(comp_names):
                     comp_names[i] = invnames.get(name, name)
                 # Reassemble the repr string
-                data_repr = part1 + '(' + ', '.join(comp_names) + ')' + part2
+                data_repr = f'{part1}(' + ', '.join(comp_names) + ')' + part2
 
         else:
             data = self.data
             data_repr = repr(self.data)
 
-        if data_repr.startswith('<' + data.__class__.__name__):
+        if data_repr.startswith(f'<{data.__class__.__name__}'):
             # remove both the leading "<" and the space after the name, as well
             # as the trailing ">"
             data_repr = data_repr[(len(data.__class__.__name__) + 2):-1]
@@ -1505,11 +1502,10 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
         def apply_method(value):
             if isinstance(value, ShapedLikeNDArray):
                 return value._apply(method, *args, **kwargs)
+            if callable(method):
+                return method(value, *args, **kwargs)
             else:
-                if callable(method):
-                    return method(value, *args, **kwargs)
-                else:
-                    return getattr(value, method)(*args, **kwargs)
+                return getattr(value, method)(*args, **kwargs)
 
         new = super().__new__(self.__class__)
         if hasattr(self, '_representation'):
@@ -1579,7 +1575,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
             # Can this ever occur? (Same class but different differential keys).
             # This exception is not tested since it is not clear how to generate it.
             if self._data._differentials.keys() != value._data._differentials.keys():
-                raise ValueError(f'setitem value must have same differentials')
+                raise ValueError('setitem value must have same differentials')
 
             for key, self_diff in self._data._differentials.items():
                 if self_diff.__class__ is not value._data._differentials[key].__class__:
@@ -1653,15 +1649,14 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
 
     def __setattr__(self, attr, value):
         # Don't slow down access of private attributes!
-        if not attr.startswith('_'):
-            if hasattr(self, 'representation_info'):
-                repr_attr_names = set()
-                for representation_attr in self.representation_info.values():
-                    repr_attr_names.update(representation_attr['names'])
+        if not attr.startswith('_') and hasattr(self, 'representation_info'):
+            repr_attr_names = set()
+            for representation_attr in self.representation_info.values():
+                repr_attr_names.update(representation_attr['names'])
 
-                if attr in repr_attr_names:
-                    raise AttributeError(
-                        f'Cannot set any frame attribute {attr}')
+            if attr in repr_attr_names:
+                raise AttributeError(
+                    f'Cannot set any frame attribute {attr}')
 
         super().__setattr__(attr, value)
 
@@ -1773,10 +1768,7 @@ class BaseCoordinateFrame(ShapedLikeNDArray):
         self_car = self.data.without_differentials().represent_as(r.CartesianRepresentation)
         other_car = other_in_self_system.data.without_differentials().represent_as(r.CartesianRepresentation)
         dist = (self_car - other_car).norm()
-        if dist.unit == u.one:
-            return dist
-        else:
-            return Distance(dist)
+        return dist if dist.unit == u.one else Distance(dist)
 
     @property
     def cartesian(self):
@@ -1890,13 +1882,13 @@ class GenericFrame(BaseCoordinateFrame):
         self.frame_attributes = {}
         for name, default in frame_attrs.items():
             self.frame_attributes[name] = Attribute(default)
-            setattr(self, '_' + name, default)
+            setattr(self, f'_{name}', default)
 
         super().__init__(None)
 
     def __getattr__(self, name):
-        if '_' + name in self.__dict__:
-            return getattr(self, '_' + name)
+        if f'_{name}' in self.__dict__:
+            return getattr(self, f'_{name}')
         else:
             raise AttributeError(f'no {name}')
 

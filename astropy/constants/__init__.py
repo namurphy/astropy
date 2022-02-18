@@ -73,7 +73,7 @@ def set_enabled_constants(modname):
     from . import utils as _utils
 
     try:
-        modmodule = importlib.import_module('.constants.' + modname, 'astropy')
+        modmodule = importlib.import_module(f'.constants.{modname}', 'astropy')
         codata_context = modmodule.codata
         iaudata_context = modmodule.iaudata
     except ImportError as exc:

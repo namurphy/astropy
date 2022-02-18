@@ -67,10 +67,7 @@ class TestManipulation(ShapeSetup):
     """
 
     def test_ravel(self, method):
-        if method:
-            s0_ravel = self.s0.ravel()
-        else:
-            s0_ravel = np.ravel(self.s0)
+        s0_ravel = self.s0.ravel() if method else np.ravel(self.s0)
         assert type(s0_ravel) is type(self.s0)
         assert s0_ravel.shape == (self.s0.size,)
         assert np.all(s0_ravel.lon == self.s0.lon.ravel())
@@ -80,10 +77,7 @@ class TestManipulation(ShapeSetup):
         assert s0_ravel.differentials['s'].shape == (self.s0.size,)
 
         # Since s1 was broadcast, ravel needs to make a copy.
-        if method:
-            s1_ravel = self.s1.ravel()
-        else:
-            s1_ravel = np.ravel(self.s1)
+        s1_ravel = self.s1.ravel() if method else np.ravel(self.s1)
         assert type(s1_ravel) is type(self.s1)
         assert s1_ravel.shape == (self.s1.size,)
         assert s1_ravel.differentials['s'].shape == (self.s1.size,)
@@ -91,10 +85,7 @@ class TestManipulation(ShapeSetup):
         assert not np.may_share_memory(s1_ravel.lat, self.s1.lat)
 
     def test_copy(self, method):
-        if method:
-            s0_copy = self.s0.copy()
-        else:
-            s0_copy = np.copy(self.s0)
+        s0_copy = self.s0.copy() if method else np.copy(self.s0)
         s0_copy_diff = s0_copy.differentials['s']
         assert s0_copy.shape == self.s0.shape
         assert np.all(s0_copy.lon == self.s0.lon)
@@ -158,10 +149,7 @@ class TestManipulation(ShapeSetup):
         assert np.may_share_memory(s0_diff.d_lon, self.diff.d_lon)
 
     def test_swapaxes(self, method):
-        if method:
-            s1_swapaxes = self.s1.swapaxes(0, 1)
-        else:
-            s1_swapaxes = np.swapaxes(self.s1, 0, 1)
+        s1_swapaxes = self.s1.swapaxes(0, 1) if method else np.swapaxes(self.s1, 0, 1)
         s1_diff = s1_swapaxes.differentials['s']
         assert s1_swapaxes.shape == (7, 6)
         assert s1_diff.shape == s1_swapaxes.shape
@@ -218,10 +206,7 @@ class TestManipulation(ShapeSetup):
         assert np.may_share_memory(s0_adddim.lat, self.s0.lat)
 
     def test_take(self, method):
-        if method:
-            s0_take = self.s0.take((5, 2))
-        else:
-            s0_take = np.take(self.s0, (5, 2))
+        s0_take = self.s0.take((5, 2)) if method else np.take(self.s0, (5, 2))
         s0_diff = s0_take.differentials['s']
         assert s0_take.shape == (2,)
         assert s0_diff.shape == s0_take.shape

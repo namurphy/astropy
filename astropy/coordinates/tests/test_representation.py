@@ -1107,9 +1107,8 @@ def test_subclass_representation():
 
     class Longitude180(Longitude):
         def __new__(cls, angle, unit=None, wrap_angle=180 * u.deg, **kwargs):
-            self = super().__new__(cls, angle, unit=unit, wrap_angle=wrap_angle,
+            return super().__new__(cls, angle, unit=unit, wrap_angle=wrap_angle,
                                    **kwargs)
-            return self
 
     class SphericalWrap180Representation(SphericalRepresentation):
         attr_classes = {'lon': Longitude180,
@@ -1358,12 +1357,9 @@ class TestCartesianRepresentationWithDifferential:
 
         # make sure represent_as() passes through the differentials
         for name in REPRESENTATION_CLASSES:
-            if name == 'radial':
+            if name == 'radial' or name != 'radial' and name.endswith("geodetic"):
                 # TODO: Converting a CartesianDifferential to a
                 #       RadialDifferential fails, even on `master`
-                continue
-            elif name.endswith("geodetic"):
-                # TODO: Geodetic representations do not have differentials yet
                 continue
             new_rep = rep1.represent_as(REPRESENTATION_CLASSES[name],
                                         DIFFERENTIAL_CLASSES[name])
