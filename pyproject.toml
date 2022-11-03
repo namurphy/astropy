@@ -295,3 +295,32 @@ force-exclude = '''
         url = ".tmp/py39-test-image-mpldev/results/fig_comparison.html"
         message = "Click details to see the figure test comparisons for py39-test-image-mpldev."
         report_on_fail = true
+
+[tool.codespell]
+skip="*.fits,*.hdr,cextern,*.xml,*.dat"
+ignore-words-list = """
+ans,
+clen,
+coo,
+datas,
+ded,
+dequeuing,
+dfine,
+dne,
+dout,
+dum,
+fo,
+fot,
+lod,
+mapp,
+nd,
+ned,
+nin,
+ot,
+siz,
+splitted,
+struc,
+te,
+tread,
+ue,
+valu"""
