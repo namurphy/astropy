@@ -297,7 +297,7 @@ force-exclude = '''
         report_on_fail = true
 
 [tool.codespell]
-skip="*.fits,*.hdr,cextern,*.xml,*.dat"
+skip="*.fits,*.hdr,extern,cextern,*.xml,*.dat,test_groups.py"
 ignore-words-list = """
 ans,
 clen,
@@ -311,16 +311,32 @@ dout,
 dum,
 fo,
 fot,
+hart,
+hel,
+hendler,
+inflight,
+inout,
+lightyear,
 lod,
+lond,
 mapp,
+nax,
 nd,
 ned,
 nin,
+numer,
+ond,
 ot,
+precessing,
+pres,
+rotat,
 siz,
 splitted,
+stil,
 struc,
 te,
+timre,
 tread,
 ue,
-valu"""
+valu,
+wirth"""
