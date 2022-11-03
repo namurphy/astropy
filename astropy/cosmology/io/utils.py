@@ -61,7 +61,7 @@ def convert_parameter_to_model_parameter(parameter, value, meta=None):
     -------
     `astropy.modeling.Parameter`
     """
-    # Get from meta information relavant to Model
+    # Get from meta information relevant to Model
     extra = {k: v for k, v in (meta or {}).items()
              if k in ('getter', 'setter', 'fixed', 'tied', 'min', 'max',
                       'bounds', 'prior', 'posterior')}
