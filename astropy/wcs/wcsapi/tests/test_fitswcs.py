@@ -1243,7 +1243,7 @@ def test_spectral_with_time_kw(header_spectral_with_time):
         assert_allclose((sky.spherical.lon.degree, sky.spherical.lat.degree, spec.value),
                         w.wcs.crval, rtol=1e-3)
 
-    # Chek with MJD-AVG and TIMESYS
+    # Check with MJD-AVG and TIMESYS
     hdr = header_spectral_with_time.copy()
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', (VerifyWarning, FITSFixedWarning))

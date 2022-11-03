@@ -659,7 +659,7 @@ class TestLogQuantityArithmetic:
                   u.Magnitude(6.78, 2. * u.mag)])
     @pytest.mark.parametrize('fac', [1., 2, 0.4])
     def test_multiplication_division(self, other, fac):
-        """Check that multiplication and division works as expectes"""
+        """Check that multiplication and division work as expected"""
 
         lq_sf = fac * other
         assert lq_sf.unit.physical_unit == other.unit.physical_unit**fac
