@@ -74,7 +74,7 @@ class MrtHeader(cds.CdsHeader):
         Returns
         -------
         fmt: (int, int, int, bool, bool)
-            List of values describing the Float sting.
+            List of values describing the Float string.
             (size, dec, ent, sign, exp)
             size, length of the given string.
             ent, number of digits before decimal point.
@@ -114,7 +114,7 @@ class MrtHeader(cds.CdsHeader):
         """
         String formatter function for a column containing Float values.
         Checks if the values in the given column are in Scientific notation,
-        by spliting the value string. It is assumed that the column either has
+        by splitting the value string. It is assumed that the column either has
         float values or Scientific notation.
 
         A ``col.formatted_width`` attribute is added to the column. It is not added
@@ -444,7 +444,7 @@ class MrtHeader(cds.CdsHeader):
                     continue
 
             # Replace single ``SkyCoord`` column by its coordinate components if no coordinate
-            # columns of the correspoding type exist yet.
+            # columns of the corresponding type exist yet.
             if isinstance(col, SkyCoord):
                 # If coordinates are given in RA/DEC, divide each them into hour/deg,
                 # minute/arcminute, second/arcsecond columns.
