@@ -14746,7 +14746,7 @@ astropy.units
 - Added missing capability for array ``Quantity``\s to be initializable by
   a list of ``Quantity``\s. [#835]
 
-- Fixed the definition of year and light year to be in terms of Julian year
+- Fixed the definition of year and lightyear to be in terms of Julian year
   per the IAU definition. [#861]
 
 - "degree" was removed from the list of SI base units. [#863]
