@@ -1,0 +1,2 @@
+Set up the configuration for ``codespell`` in :file:`pyproject.toml`,
+and fixed miscellaneous typos throughout the package.
