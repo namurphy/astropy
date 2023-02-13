@@ -122,6 +122,9 @@ _units_and_physical_types = [
     (si.kg * si.m**-2 * si.s**-1, {"mass flux", "momentum density"}),
     (si.m**-3, "number density"),
     (si.m**-2 * si.s**-1, "particle flux"),
+    (astrophys.DN / astrophys.photon, "gain"),
+    (si.m**5 * astrophys.count / misc.pixel / si.s, "temperature response"),
+    (astrophys.count / astrophys.photon / si.m**2, "wavelength response"),
 ]
 
 _physical_unit_mapping = {}
